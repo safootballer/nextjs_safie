@@ -1,9 +1,8 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { createHash } from 'crypto'
-import { prisma } from '@/lib/prisma'
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -18,6 +17,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .update(credentials.password as string)
           .digest('hex')
 
+        const { prisma } = await import('@/lib/prisma')
         const user = await prisma.user.findFirst({
           where: {
             username: credentials.username as string,
@@ -27,32 +27,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user) return null
 
-        // Update last login
         await prisma.user.update({
           where: { id: user.id },
           data: { last_login: new Date().toISOString() },
         })
 
-        return { id: String(user.id), name: user.username, email: user.username, role: user.role }
+        return {
+          id: String(user.id),
+          name: user.username,
+          email: user.username,
+          role: user.role,
+        }
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: any) {
       if (user) {
-        token.id   = user.id
-        token.role = (user as any).role
+        token.id = user.id
+        token.role = user.role
       }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (session.user) {
-        (session.user as any).id   = token.id
-        ;(session.user as any).role = token.role
+        session.user.id = token.id
+        session.user.role = token.role
       }
       return session
     },
   },
   pages: { signIn: '/login' },
-  session: { strategy: 'jwt' },
-})
+  session: { strategy: 'jwt' as const },
+  secret: process.env.NEXTAUTH_SECRET,
+}
+
+const handler = NextAuth(authOptions)
+export { handler as GET, handler as POST }
+export const { auth, signIn, signOut } = NextAuth(authOptions)
