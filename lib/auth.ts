@@ -2,7 +2,12 @@ import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { createHash } from 'crypto'
 
-export const authOptions = {
+export const {
+  handlers: { GET, POST },
+  auth,
+  signIn,
+  signOut,
+} = NextAuth({
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -18,6 +23,7 @@ export const authOptions = {
           .digest('hex')
 
         const { prisma } = await import('@/lib/prisma')
+
         const user = await prisma.user.findFirst({
           where: {
             username: credentials.username as string,
@@ -60,8 +66,4 @@ export const authOptions = {
   pages: { signIn: '/login' },
   session: { strategy: 'jwt' as const },
   secret: process.env.NEXTAUTH_SECRET,
-}
-
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
-export const { auth, signIn, signOut } = NextAuth(authOptions)
+})
