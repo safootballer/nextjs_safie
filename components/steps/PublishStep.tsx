@@ -94,13 +94,14 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
           🎉 Article is LIVE!{' '}
           
             href={`https://sa-footballer-website.vercel.app/editorials/${publishedSlug}`}
-            target="_blank" rel="noreferrer"
+            target="_blank"
+            rel="noreferrer"
             style={{ color: '#4ade80', textDecoration: 'underline' }}
           >
-            View article →
+              {'View article →'}
           </a>
-        </div>
-      )}
+          </div>
+            )}
 
       <div className="alert-info" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #e6fe00' }}>
         Fill in the details below and hit{' '}
