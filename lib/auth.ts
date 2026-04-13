@@ -1,13 +1,9 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { createHash } from 'crypto'
+import type { NextAuthOptions } from 'next-auth'
 
-export const {
-  handlers: { GET, POST },
-  auth,
-  signIn,
-  signOut,
-} = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -43,27 +39,29 @@ export const {
           name: user.username,
           email: user.username,
           role: user.role,
-        }
+        } as any
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.role = user.role
+        token.id = (user as any).id
+        token.role = (user as any).role
       }
       return token
     },
-    async session({ session, token }: any) {
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id
-        session.user.role = token.role
+        (session.user as any).id = token.id
+        ;(session.user as any).role = token.role
       }
       return session
     },
   },
   pages: { signIn: '/login' },
-  session: { strategy: 'jwt' as const },
+  session: { strategy: 'jwt' },
   secret: process.env.NEXTAUTH_SECRET,
-})
+}
+
+export default NextAuth(authOptions)
