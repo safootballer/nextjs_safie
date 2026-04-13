@@ -1,0 +1,181 @@
+export const MAGAZINE_PROMPT = `
+You are a professional Australian football journalist writing for a print magazine.
+Write in Australian English throughout — use Australian spelling and expressions (e.g. "colour" not "color", "organisation" not "organization", "centre" not "center", "defence" not "defense", "practise" not "practice", "travelled" not "traveled").
+
+CRITICAL RULES - READ CAREFULLY:
+1. Use ONLY the exact best players listed in the "BEST PLAYERS (OFFICIAL)" section
+2. Use ONLY the exact goal scorers listed in the "GOAL SCORERS (OFFICIAL)" section
+3. Do NOT invent or guess any player names
+4. Use the Period Scores table format exactly as shown in the context
+
+OPENING PARAGRAPH - MUST BE CONTEXTUAL:
+Look at the "Match Competitiveness Analysis" in the context to determine the tone:
+- If margin <= 20 points: Use phrases like "In a closely fought contest", "In a tight encounter", or "In a thrilling clash"
+- If margin 21-40 points: Use phrases like "In a solid performance", "In a commanding display", "In a professional showing"
+- If margin > 40 points: Use phrases like "In a dominant display", "In an emphatic victory", "In a comprehensive performance"
+- If margin > 90 points: Use phrases like "In an absolute mauling", "In a complete thrashing"
+
+STRUCTURE (USE EXACT HEADINGS):
+1. Opening Paragraph (NO HEADING)
+2. Final Scores (EXACT HEADING)
+   [Home Team]   | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score]
+   [Away Team]   | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score]
+3. MATCH SUMMARY (EXACT HEADING) - 4 paragraphs, one per quarter
+4. FINAL WRAP-UP (EXACT HEADING)
+5. BEST PLAYERS (EXACT HEADING)
+6. GOAL SCORERS (EXACT HEADING)
+7. PLAYED AT (EXACT HEADING)
+
+LENGTH REQUIREMENT: 750-900 words
+
+Context:
+{context}
+
+Write the magazine match report now.
+`
+
+export const WEB_ARTICLE_PROMPT = `
+You are a digital sports journalist writing an engaging web article for an online audience.
+Write in Australian English throughout.
+
+CRITICAL RULES:
+1. Use ONLY the exact best players listed in the "BEST PLAYERS (OFFICIAL)" section
+2. Use ONLY the exact goal scorers listed in the "GOAL SCORERS (OFFICIAL)" section
+3. Do NOT invent or guess any player names
+
+WEB ARTICLE STRUCTURE:
+1. HEADLINE
+2. LEAD PARAGRAPH
+3. KEY MOMENTS (Section heading)
+4. PLAYER PERFORMANCES (Section heading)
+5. THE STATS (Section heading)
+6. WHAT IT MEANS (Section heading)
+
+LENGTH: 500-650 words
+
+Context:
+{context}
+
+Write the web article now.
+`
+
+export const SOCIAL_MEDIA_PROMPT = `
+You are a social media content creator writing an engaging long-form post about an Australian football match.
+Write in Australian English throughout.
+
+CRITICAL RULES:
+1. Use ONLY the exact best players listed in the "BEST PLAYERS (OFFICIAL)" section
+2. Use ONLY the exact goal scorers listed in the "GOAL SCORERS (OFFICIAL)" section
+3. Do NOT invent or guess any player names
+4. Do NOT use **asterisks** for bold — use emojis for emphasis instead
+5. No markdown formatting at all
+
+SOCIAL MEDIA POST STRUCTURE:
+1. ATTENTION-GRABBING OPENING — start with a strong emoji and punchy sentence
+2. THE STORY (quarter by quarter) — use ⚡ Q1, ⚡ Q2 etc
+3. THE HEROES — use ⭐ to highlight each player
+4. BY THE NUMBERS — use 📊 and bullet points with emojis
+5. CLOSING HOOK + hashtags
+
+LENGTH: 350-500 words
+
+Context:
+{context}
+
+Write the social media long-form post now.
+`
+
+export function getPrompt(contentType: string): string {
+  switch (contentType) {
+    case 'Magazine match report': return MAGAZINE_PROMPT
+    case 'Web article':           return WEB_ARTICLE_PROMPT
+    default:                      return SOCIAL_MEDIA_PROMPT
+  }
+}
+
+export function calculateOpenAICost(
+  promptTokens: number,
+  completionTokens: number,
+  model = 'gpt-4o-mini',
+): number {
+  const pricing: Record<string, { input: number; output: number }> = {
+    'gpt-4o-mini': { input: 0.15 / 1_000_000, output: 0.6 / 1_000_000 },
+    'gpt-4o':      { input: 2.5 / 1_000_000,  output: 10.0 / 1_000_000 },
+  }
+  const p = pricing[model] ?? pricing['gpt-4o-mini']
+  return promptTokens * p.input + completionTokens * p.output
+}
+
+export const AUTHORS = [
+  'Ethan Parker','Caleb Murphy','Dylan Fraser','Blake Henderson','Nathan Collins',
+  'Connor Walsh','Jordan Hughes','Ryan McCarthy','Mitchell Dawson','Jake Sullivan',
+  'Tyler Bennett','Corey Richards','Ben Lawson','Josh McLean','Kyle Donovan',
+  'Aaron Griffiths','Sam Peterson','Luke Davidson','Bailey Thornton','Trent Gallagher',
+  'Liam O\'Connor','Noah Williams','Oliver Smith','William Brown','James Taylor',
+  'Lucas Wilson','Henry Anderson','Alexander Clark','Charlie Walker','Mason Hall',
+  'Charlotte Johnson','Olivia White','Amelia Harris','Isla Martin','Mia Thompson',
+  'Ava Robinson','Grace Lee','Chloe Walker','Ella Wright','Emily Scott',
+  'Harper King','Sophie Turner','Evie Collins','Ruby Stewart','Willow Morris',
+  'Zoe Bell','Matilda Cooper','Lily Ward','Hannah Brooks','Lucy Bennett',
+  'Poppy Sanders','Aria Jenkins','Layla Price','Scarlett Murphy','Ellie Kelly',
+]
+
+export const COMPETITION_MAP: Record<string, string> = {
+  AFL: 'AFL', AFLW: 'AFLW', SANFL: 'SANFL', SANFLW: 'SANFLW',
+  Amateur: 'Amateur', Amateurs: 'Amateur', 'SAWFL Women\'s': 'SAWFL Women\'s',
+  'Country Football': 'Country Football',
+}
+
+export const COUNTRY_LEAGUES: Record<string, string> = {
+  'Adelaide Plains': 'adelaide-plains',
+  'Barossa Light & Gawler': 'barossa',
+  'Broken Hill': 'broken-hill',
+  'Eastern Eyre': 'eastern-eyre',
+  'Far North': 'far-north',
+  'Great Flinders': 'great-flinders',
+  'Great Southern': 'great-southern',
+  'Hills Division 1': 'hills-div1',
+  'Hills Country Division': 'hills-country',
+  'Kangaroo Island': 'kangaroo-island',
+  'Kowree Naracoorte Tatiara': 'knt',
+  'Limestone Coast': 'limestone-coast',
+  'Murray Valley': 'murray-valley',
+  'Mid South Eastern': 'mid-south-eastern',
+  'North Eastern': 'north-eastern',
+  'Northern Areas': 'northern-areas',
+  'Port Lincoln': 'port-lincoln',
+  'River Murray': 'river-murray',
+  'Riverland': 'riverland',
+  'Southern': 'southern',
+  'Spencer Gulf': 'spencer-gulf',
+  'Western Eyre': 'western-eyre',
+  'Whyalla': 'whyalla',
+  'Yorke Peninsula': 'yorke-peninsula',
+}
+
+export const PLAYHQ_TO_COUNTRY_LEAGUE: Record<string, string> = {
+  'Adelaide Plains Football League': 'adelaide-plains',
+  'Barossa Light & Gawler Football League': 'barossa',
+  'Broken Hill Football League': 'broken-hill',
+  'Eastern Eyre Football League': 'eastern-eyre',
+  'Far North Football League': 'far-north',
+  'Great Flinders Football League': 'great-flinders',
+  'Great Southern Football League': 'great-southern',
+  'Hills Division 1 Football League': 'hills-div1',
+  'Hills Country Division Football League': 'hills-country',
+  'Kangaroo Island Football League': 'kangaroo-island',
+  'Kowree Naracoorte Tatiara Football League': 'knt',
+  'Limestone Coast Football League': 'limestone-coast',
+  'Murray Valley Football League': 'murray-valley',
+  'Mid South Eastern Football League': 'mid-south-eastern',
+  'North Eastern Football League': 'north-eastern',
+  'Northern Areas Football League': 'northern-areas',
+  'Port Lincoln Football League': 'port-lincoln',
+  'River Murray Football League': 'river-murray',
+  'Riverland Football League': 'riverland',
+  'Southern Football League': 'southern',
+  'Spencer Gulf Football League': 'spencer-gulf',
+  'Western Eyre Football League': 'western-eyre',
+  'Whyalla Football League': 'whyalla',
+  'Yorke Peninsula Football League': 'yorke-peninsula',
+}

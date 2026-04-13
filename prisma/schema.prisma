@@ -1,0 +1,75 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Match {
+  id              Int      @id @default(autoincrement())
+  match_id        String   @unique @db.VarChar(255)
+  extracted_at    String?  @db.VarChar(255)
+  date            String?  @db.VarChar(255)
+  competition     String?  @db.VarChar(255)
+  venue           String?  @db.VarChar(255)
+  home_team       String?  @db.VarChar(255)
+  away_team       String?  @db.VarChar(255)
+  home_final_score Int?
+  away_final_score Int?
+  margin          Int?
+  quarter_scores  String?  @db.Text
+  lineups         String?  @db.Text
+  goal_scorers    String?  @db.Text
+  best_players    String?  @db.Text
+
+  @@map("matches")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  username      String   @unique @db.VarChar(255)
+  password_hash String   @db.VarChar(255)
+  role          String   @db.VarChar(50)
+  created_at    String?  @db.VarChar(255)
+  last_login    String?  @db.VarChar(255)
+
+  generation_costs GenerationCost[]
+
+  @@map("users")
+}
+
+model GenerationCost {
+  id                Int     @id @default(autoincrement())
+  user_id           Int?
+  match_id          String? @db.VarChar(255)
+  content_type      String? @db.VarChar(255)
+  prompt_tokens     Int?
+  completion_tokens Int?
+  total_tokens      Int?
+  cost_usd          Float?
+  model             String? @db.VarChar(100)
+  generated_at      String? @db.VarChar(255)
+
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@map("generation_costs")
+}
+
+model MatchLink {
+  id          Int     @id @default(autoincrement())
+  playhq_url  String? @db.VarChar(500)
+  match_id    String  @unique @db.VarChar(255)
+  home_team   String? @db.VarChar(255)
+  away_team   String? @db.VarChar(255)
+  competition String? @db.VarChar(255)
+  date        String? @db.VarChar(255)
+  venue       String? @db.VarChar(255)
+  added_by    String? @db.VarChar(255)
+  added_at    String? @db.VarChar(255)
+  is_active   Int?    @default(1)
+
+  @@map("match_links")
+}
