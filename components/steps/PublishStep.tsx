@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { SectionHeading } from './MatchSelectStep'
 import { slugify } from '@/lib/publishers'
-import { AUTHORS, COMPETITION_MAP, COUNTRY_LEAGUES, PLAYHQ_TO_COUNTRY_LEAGUE } from '@/lib/constants'
+import { AUTHORS, COMPETITION_MAP, COUNTRY_LEAGUES } from '@/lib/constants'
 
 const COMPETITION_OPTIONS = ['AFL', 'AFLW', 'SANFL', 'SANFLW', 'Amateur', "SAWFL Women's", 'Country Football']
 
@@ -11,7 +11,6 @@ interface Meta {
   detectedCountryLeague: string | null
   isCountryFootball: boolean
 }
-
 interface Props {
   content: string
   contentType: string
@@ -21,40 +20,35 @@ interface Props {
 }
 
 export function PublishStep({ content, contentType, meta, publishedSlug, onPublished }: Props) {
-  // Auto-derive title from first non-empty line
-  const firstLine = content.split('\n').map(l => l.trim()).find(l => l.length > 5) ?? ''
-  const cleanTitle = firstLine.replace(/^#+\s*/, '').replace(/\*+/g, '').slice(0, 120)
+  const cleanTitle = (content.split('\n').map(l => l.trim()).find(l => l.length > 5) ?? '')
+    .replace(/^#+\s*/, '').replace(/\*+/g, '').slice(0, 120)
 
-  const [title, setTitle]             = useState(cleanTitle)
-  const [slug, setSlug]               = useState(slugify(cleanTitle))
-  const [excerpt, setExcerpt]         = useState('')
-  const [author, setAuthor]           = useState(AUTHORS[0])
-  const [competition, setCompetition] = useState('AFL')
-  const [countryLeague, setCountryLeague] = useState('')
-  const [loading, setLoading]         = useState(false)
-  const [error, setError]             = useState('')
+  const [title, setTitle]                     = useState(cleanTitle)
+  const [slug, setSlug]                       = useState(slugify(cleanTitle))
+  const [excerpt, setExcerpt]                 = useState('')
+  const [author, setAuthor]                   = useState(AUTHORS[0])
+  const [competition, setCompetition]         = useState('AFL')
+  const [countryLeague, setCountryLeague]     = useState('')
+  const [loading, setLoading]                 = useState(false)
+  const [error, setError]                     = useState('')
 
-  // Auto-fill excerpt from content
   useEffect(() => {
     const lines = content.split('\n').map(l => l.trim()).filter(Boolean)
     const ex = lines.find(l => l.length > 80 && !l.startsWith('#') && !l.startsWith('**') && !l.startsWith('|'))
     setExcerpt((ex ?? lines[0] ?? '').slice(0, 300))
   }, [content])
 
-  // Auto-detect competition from meta
   useEffect(() => {
     if (!meta) return
-    const rawComp = meta.competition ?? 'AFL'
     if (meta.isCountryFootball) {
       setCompetition('Country Football')
       setCountryLeague(meta.detectedCountryLeague ?? '')
     } else {
-      const mapped = COMPETITION_MAP[rawComp] ?? 'AFL'
-      setCompetition(COMPETITION_OPTIONS.includes(mapped) ? mapped : 'AFL')
+      const m = COMPETITION_MAP[meta.competition] ?? 'AFL'
+      setCompetition(COMPETITION_OPTIONS.includes(m) ? m : 'AFL')
     }
   }, [meta])
 
-  // Auto-slug from title
   useEffect(() => { setSlug(slugify(title)) }, [title])
 
   const ready = Boolean(title && slug && excerpt)
@@ -65,8 +59,9 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title, slug, competition, excerpt, contentText: content,
-        author, countryLeague: competition === 'Country Football' ? countryLeague : null,
+        title, slug, competition, excerpt,
+        contentText: content, author,
+        countryLeague: competition === 'Country Football' ? countryLeague : null,
         asDraft,
       }),
     })
@@ -80,102 +75,115 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     }
   }
 
+  const labelStyle = {
+    fontSize: '0.75rem' as const,
+    fontWeight: 700,
+    color: 'rgba(255,255,255,0.5)' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.08em',
+    marginBottom: '0.4rem',
+    display: 'block' as const,
+  }
+
   return (
-    <section>
-      <SectionHeading step={4} title="Publish to SA Footballer Website" />
+    <section className="fade-up">
+      <SectionHeading step={4} title="Publish to Website" />
 
       {publishedSlug && (
-        <div className="rounded-lg px-4 py-3 text-sm mb-4 font-semibold" style={{ background: '#052e16', color: '#4ade80', border: '1px solid #4ade80' }}>
-          🎉 Article is LIVE! View at:{' '}
-          <a href={`https://sa-footballer-website.vercel.app/editorials/${publishedSlug}`} target="_blank" rel="noreferrer" className="underline">
-            sa-footballer-website.vercel.app/editorials/{publishedSlug}
+        <div className="alert-success" style={{ marginBottom: '1.25rem' }}>
+          🎉 Article is LIVE!{' '}
+          
+            href={`https://sa-footballer-website.vercel.app/editorials/${publishedSlug}`}
+            target="_blank" rel="noreferrer"
+            style={{ color: '#4ade80', textDecoration: 'underline' }}
+          >
+            View article →
           </a>
         </div>
       )}
 
-      <div className="rounded-xl p-4 mb-5 text-sm" style={{ background: '#000', borderLeft: '5px solid #e6fe00' }}>
-        Fill in the details below and hit <strong style={{ color: '#e6fe00' }}>Publish Live</strong> — your article will appear on the Editorials page immediately.
+      <div className="alert-info" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #e6fe00' }}>
+        Fill in the details below and hit{' '}
+        <strong style={{ color: '#e6fe00' }}>Publish Live</strong>{' '}
+        — appears on the website immediately.
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+
         {/* Left column */}
-        <div className="space-y-4">
-          <Field label="Article Title *">
-            <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Glenelg Dominate in 45-Point Victory Over Sturt"
-              className="w-full rounded-lg border-2 px-4 py-3 text-black text-sm outline-none"
-              style={{ borderColor: '#2ca3ee' }} />
-          </Field>
-
-          <Field label="Slug (URL path) *" hint="Auto-generated from title">
-            <input type="text" value={slug} onChange={e => setSlug(e.target.value)}
-              className="w-full rounded-lg border-2 px-4 py-3 text-black text-sm outline-none font-mono"
-              style={{ borderColor: '#2ca3ee' }} />
-          </Field>
-
-          <Field label="Excerpt * (shown on editorial cards)">
-            <textarea value={excerpt} onChange={e => setExcerpt(e.target.value)} rows={4}
-              className="w-full rounded-lg border-2 px-4 py-3 text-black text-sm outline-none"
-              style={{ borderColor: '#2ca3ee' }} />
-          </Field>
-
-          <Field label="Author">
-            <select value={author} onChange={e => setAuthor(e.target.value)}
-              className="w-full rounded-lg border-2 px-4 py-3 text-black text-sm outline-none"
-              style={{ borderColor: '#2ca3ee' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>Article Title *</label>
+            <input
+              type="text" value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Glenelg Dominate in 45-Point Victory"
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Slug (URL path) *</label>
+            <input
+              type="text" value={slug} onChange={e => setSlug(e.target.value)}
+              className="input-field"
+              style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Excerpt *</label>
+            <textarea
+              value={excerpt} onChange={e => setExcerpt(e.target.value)}
+              rows={3} className="input-field"
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Author</label>
+            <select value={author} onChange={e => setAuthor(e.target.value)} className="input-field">
               {AUTHORS.map(a => <option key={a}>{a}</option>)}
             </select>
-          </Field>
+          </div>
         </div>
 
         {/* Right column */}
-        <div className="space-y-4">
-          <Field label="Competition *">
-            <select value={competition} onChange={e => setCompetition(e.target.value)}
-              className="w-full rounded-lg border-2 px-4 py-3 text-black text-sm outline-none"
-              style={{ borderColor: '#2ca3ee' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>Competition *</label>
+            <select value={competition} onChange={e => setCompetition(e.target.value)} className="input-field">
               {COMPETITION_OPTIONS.map(c => <option key={c}>{c}</option>)}
             </select>
-          </Field>
+          </div>
 
           {competition === 'Country Football' && (
-            <Field label="Country League *">
-              <select value={countryLeague} onChange={e => setCountryLeague(e.target.value)}
-                className="w-full rounded-lg border-2 px-4 py-3 text-black text-sm outline-none"
-                style={{ borderColor: '#2ca3ee' }}>
+            <div>
+              <label style={labelStyle}>Country League *</label>
+              <select value={countryLeague} onChange={e => setCountryLeague(e.target.value)} className="input-field">
                 {Object.entries(COUNTRY_LEAGUES).map(([name, val]) => (
                   <option key={val} value={val}>{name}</option>
                 ))}
               </select>
-            </Field>
+            </div>
           )}
 
           {!ready && (
-            <div className="rounded-lg px-4 py-3 text-sm" style={{ background: '#2d1a00', border: '1px solid #fbbf24', color: '#fbbf24' }}>
-              ⚠️ Fill in Title, Slug and Excerpt to enable publishing.
-            </div>
+            <div className="alert-warning">⚠️ Fill in Title, Slug and Excerpt to publish.</div>
           )}
-
           {error && (
-            <div className="rounded-lg px-4 py-3 text-sm" style={{ background: '#2d0000', border: '1px solid #f87171', color: '#f87171' }}>
-              ❌ {error}
-            </div>
+            <div className="alert-error">❌ {error}</div>
           )}
 
-          <div className="space-y-3 pt-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
             <button
               onClick={() => publish(false)}
               disabled={!ready || loading}
-              className="w-full rounded-lg py-3 font-bold text-white text-sm transition-all"
-              style={{ background: (!ready || loading) ? '#555' : 'linear-gradient(90deg,#2ca3ee,#00b8f1)' }}
+              className="btn-primary"
+              style={{ width: '100%', padding: '0.9rem' }}
             >
               {loading ? '📡 Publishing…' : '🚀 Publish Live Now'}
             </button>
             <button
               onClick={() => publish(true)}
               disabled={!title || loading}
-              className="w-full rounded-lg py-3 font-bold text-black text-sm transition-all"
-              style={{ background: !title ? '#888' : '#e6fe00' }}
+              className="btn-yellow"
+              style={{ width: '100%', padding: '0.9rem' }}
             >
               💾 Save as Draft
             </button>
@@ -183,17 +191,5 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
         </div>
       </div>
     </section>
-  )
-}
-
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-semibold mb-1">
-        {label}
-        {hint && <span className="ml-2 text-xs opacity-50 font-normal">{hint}</span>}
-      </label>
-      {children}
-    </div>
   )
 }

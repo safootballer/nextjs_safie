@@ -12,41 +12,55 @@ interface Props {
 export function MatchSelectStep({ grouped, matches, loading, selectedIds, onSelectionChange }: Props) {
   function toggle(id: string) {
     onSelectionChange(
-      selectedIds.includes(id) ? selectedIds.filter(x => x !== id) : [...selectedIds, id]
+      selectedIds.includes(id)
+        ? selectedIds.filter(x => x !== id)
+        : [...selectedIds, id]
     )
   }
 
   return (
-    <section>
+    <section className="fade-up">
       <SectionHeading step={1} title="Select Matches" />
 
-      {loading && <p className="text-sm opacity-60 mt-4">Loading matches…</p>}
+      {loading && (
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>Loading matches…</p>
+      )}
 
       {!loading && matches.length === 0 && (
-        <div className="rounded-2xl p-8 text-center mt-4" style={{ background: '#000', border: '2px solid #2ca3ee' }}>
-          <h3 className="text-lg font-bold" style={{ color: '#e6fe00' }}>📭 No Matches Available Yet</h3>
-          <p className="text-sm mt-2 opacity-75">Your admin team hasn't added this week's matches yet. Check back soon!</p>
+        <div className="glass-card" style={{ padding: '3rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📭</div>
+          <h3 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 700, color: '#e6fe00', fontSize: '1.2rem',
+          }}>No Matches Available Yet</h3>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+            Your admin team hasn't added this week's matches yet.
+          </p>
         </div>
       )}
 
       {!loading && matches.length > 0 && (
         <>
-          <p className="text-sm font-semibold mt-4 mb-3">Select one or more matches to generate content for:</p>
-
           {/* Selected chips */}
           {selectedIds.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem' }}>
               {selectedIds.map(id => {
                 const m = matches.find(x => x.match_id === id)!
                 return (
                   <span
                     key={id}
-                    className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold cursor-pointer"
-                    style={{ background: '#2ca3ee', color: '#fff' }}
                     onClick={() => toggle(id)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                      background: 'rgba(44,163,238,0.15)',
+                      border: '1px solid #2ca3ee',
+                      borderRadius: 20, padding: '4px 14px',
+                      fontSize: '0.8rem', fontWeight: 600,
+                      color: '#fff', cursor: 'pointer',
+                    }}
                   >
                     ✅ {m.home_team} vs {m.away_team}
-                    <span className="ml-1 opacity-70">✕</span>
+                    <span style={{ color: '#2ca3ee', fontSize: '0.75rem' }}>✕</span>
                   </span>
                 )
               })}
@@ -55,31 +69,41 @@ export function MatchSelectStep({ grouped, matches, loading, selectedIds, onSele
 
           {/* Competition groups */}
           {Object.entries(grouped).map(([comp, compMatches]) => (
-            <div key={comp} className="mb-6">
-              <p className="text-sm font-black uppercase mb-3 pb-1" style={{ color: '#2ca3ee', borderBottom: '3px solid #2ca3ee', letterSpacing: '0.04em' }}>
-                🏆 {comp}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div key={comp} style={{ marginBottom: '2rem' }}>
+              <div className="comp-label">🏆 {comp}</div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: '0.875rem',
+              }}>
                 {compMatches.map(m => {
                   const selected = selectedIds.includes(m.match_id)
                   return (
                     <div
                       key={m.match_id}
+                      className={`match-card ${selected ? 'selected' : ''}`}
                       onClick={() => toggle(m.match_id)}
-                      className="rounded-xl p-4 cursor-pointer transition-all"
-                      style={{
-                        background: selected ? 'rgba(44,163,238,0.15)' : '#000',
-                        border: selected ? '2px solid #2ca3ee' : '1px solid rgba(44,163,238,0.4)',
-                      }}
                     >
-                      <p className="font-bold text-sm">{m.home_team}</p>
-                      <p className="text-xs my-1" style={{ color: '#2ca3ee' }}>vs</p>
-                      <p className="font-bold text-sm">{m.away_team}</p>
-                      <hr className="my-2" style={{ borderColor: '#2ca3ee', opacity: 0.2 }} />
-                      <p className="text-xs opacity-60">📅 {m.date?.slice(0, 10) ?? 'TBD'}</p>
-                      <p className="text-xs opacity-60">📍 {m.venue ?? 'TBD'}</p>
+                      <div style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 700, fontSize: '1rem', color: '#fff', marginBottom: 2,
+                      }}>{m.home_team}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#2ca3ee', margin: '4px 0', fontWeight: 600 }}>vs</div>
+                      <div style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 700, fontSize: '1rem', color: '#fff',
+                      }}>{m.away_team}</div>
+                      <div style={{ height: 1, background: 'rgba(44,163,238,0.15)', margin: '0.625rem 0' }} />
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
+                        📅 {m.date?.slice(0, 10) ?? 'TBD'}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>
+                        📍 {m.venue ?? 'TBD'}
+                      </div>
                       {selected && (
-                        <p className="text-xs font-bold mt-2" style={{ color: '#e6fe00' }}>✓ Selected</p>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', fontWeight: 700, color: '#e6fe00' }}>
+                          ✓ Selected
+                        </div>
                       )}
                     </div>
                   )
@@ -89,7 +113,9 @@ export function MatchSelectStep({ grouped, matches, loading, selectedIds, onSele
           ))}
 
           {selectedIds.length === 0 && (
-            <p className="text-sm opacity-60 mt-2">👆 Click matches above to select them, then scroll down to build the knowledge base.</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+              👆 Click matches above to select them, then scroll down.
+            </p>
           )}
         </>
       )}
@@ -98,9 +124,22 @@ export function MatchSelectStep({ grouped, matches, loading, selectedIds, onSele
 }
 
 export function SectionHeading({ step, title }: { step: number; title: string }) {
+  const icons = ['🏈', '🧠', '✍️', '🚀']
   return (
-    <h2 className="text-2xl font-black pb-2 mb-4" style={{ color: '#2ca3ee', borderBottom: '3px solid #2ca3ee' }}>
-      {step === 1 ? '🏈' : step === 2 ? '🧠' : step === 3 ? '✍️' : '🚀'} Step {step}: {title}
-    </h2>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.875rem',
+      marginBottom: '1.25rem', paddingBottom: '0.75rem',
+      borderBottom: '1px solid rgba(44,163,238,0.2)',
+    }}>
+      <span className="step-badge">{step}</span>
+      <h2 style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontWeight: 800, fontSize: '1.5rem',
+        letterSpacing: '0.04em', textTransform: 'uppercase',
+        color: '#2ca3ee', margin: 0,
+      }}>
+        {icons[step - 1]} {title}
+      </h2>
+    </div>
   )
 }

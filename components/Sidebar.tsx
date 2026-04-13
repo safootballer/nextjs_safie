@@ -2,11 +2,7 @@
 import { signOut } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 
-interface SidebarProps {
-  user: { name?: string | null; role?: string }
-}
-
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar({ user }: { user: any }) {
   const [matchCount, setMatchCount] = useState<number | null>(null)
   const [hasKB, setHasKB]           = useState(false)
   const [hasContent, setHasContent] = useState(false)
@@ -17,7 +13,6 @@ export function Sidebar({ user }: SidebarProps) {
       .then(d => setMatchCount(d.total ?? 0))
       .catch(() => setMatchCount(0))
 
-    // Listen for custom events from dashboard
     const onKB      = () => setHasKB(true)
     const onContent = () => setHasContent(true)
     const onReset   = () => { setHasKB(false); setHasContent(false) }
@@ -32,85 +27,118 @@ export function Sidebar({ user }: SidebarProps) {
   }, [])
 
   return (
-    <aside
-      className="w-64 flex-shrink-0 flex flex-col py-6 px-4 gap-4"
-      style={{ background: '#000', borderRight: '3px solid #2ca3ee', minHeight: '100vh' }}
-    >
-      {/* Logos */}
-      <div className="flex justify-center gap-4 mb-2">
-        <img src="/logo2.png" alt="SAFie" width={60} onError={e => (e.currentTarget.style.display='none')} />
-        <img src="/logo.png"  alt="SA Footballer" width={60} onError={e => (e.currentTarget.style.display='none')} />
-      </div>
+    <aside style={{
+      width: 260,
+      flexShrink: 0,
+      background: '#000',
+      borderRight: '1px solid rgba(44,163,238,0.2)',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '1.5rem 1rem',
+      gap: '0.5rem',
+      position: 'sticky',
+      top: 0,
+      height: '100vh',
+      overflowY: 'auto',
+    }}>
 
       {/* Brand */}
-      <div className="text-center">
-        <span className="block text-lg font-black" style={{ color: '#2ca3ee' }}>SAFie</span>
-        <span className="block text-xs font-bold tracking-widest uppercase" style={{ color: '#e6fe00' }}>
-          AI BY SA FOOTBALLER
+      <div style={{ textAlign: 'center', padding: '0.5rem 0 1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <img src="/logo2.png" alt="SAFie" style={{ height: 36 }}
+            onError={e => (e.currentTarget.style.display='none')} />
+          <img src="/logo.png" alt="SA Footballer" style={{ height: 36 }}
+            onError={e => (e.currentTarget.style.display='none')} />
+        </div>
+        <div style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 900, fontSize: '1.4rem',
+          color: '#2ca3ee', letterSpacing: '-0.01em',
+        }}>SAFie</div>
+        <span className="badge-yellow" style={{ fontSize: '0.6rem', marginTop: 4, display: 'inline-block' }}>
+          AI by SA Footballer
         </span>
       </div>
 
-      <hr style={{ borderColor: '#2ca3ee', opacity: 0.35 }} />
+      <div style={{ height: 1, background: 'rgba(44,163,238,0.2)', margin: '0.25rem 0' }} />
 
       {/* User */}
-      <div>
-        <p className="text-xs font-bold uppercase mb-2" style={{ color: '#2ca3ee', borderBottom: '2px solid #2ca3ee', paddingBottom: 4 }}>
-          👤 User Profile
-        </p>
-        <p className="text-sm text-white"><span className="opacity-60">Name:</span> {user?.name ?? '—'}</p>
-        <p className="text-sm text-white mt-1"><span className="opacity-60">Role:</span> {((user as any)?.role ?? 'user').toUpperCase()}</p>
+      <div style={{
+        padding: '0.75rem',
+        borderRadius: 12,
+        background: 'rgba(44,163,238,0.05)',
+        border: '1px solid rgba(44,163,238,0.15)',
+      }}>
+        <div style={{
+          fontSize: '0.68rem', fontWeight: 700,
+          color: 'rgba(255,255,255,0.4)',
+          textTransform: 'uppercase', letterSpacing: '0.1em',
+          marginBottom: '0.4rem',
+        }}>👤 Signed in as</div>
+        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#fff' }}>
+          {user?.name ?? '—'}
+        </div>
+        <div style={{ fontSize: '0.75rem', color: '#2ca3ee', marginTop: 2 }}>
+          {(user?.role ?? 'user').toUpperCase()}
+        </div>
       </div>
 
-      <hr style={{ borderColor: '#2ca3ee', opacity: 0.35 }} />
-
-      {/* Stats */}
-      <div className="rounded-lg p-3" style={{ background: '#1a1a1a', border: '1px solid #2ca3ee' }}>
-        <p className="text-xs opacity-60 mb-1">📊 Available Matches</p>
-        <p className="text-2xl font-black" style={{ color: '#e6fe00' }}>{matchCount ?? '…'}</p>
+      {/* Match count */}
+      <div className="metric-card">
+        <div className="metric-label">Available Matches</div>
+        <div className="metric-value">{matchCount ?? '…'}</div>
       </div>
 
+      {/* Status */}
       {hasKB
-        ? <div className="rounded-lg px-3 py-2 text-sm font-semibold" style={{ background: '#052e16', color: '#4ade80', border: '1px solid #4ade80' }}>✅ Knowledge Base Active</div>
-        : <div className="rounded-lg px-3 py-2 text-sm" style={{ background: '#0c1a2e', color: '#93c5fd', border: '1px solid #2ca3ee' }}>ℹ️ Select a match to begin</div>
+        ? <div className="alert-success" style={{ fontSize: '0.8rem', padding: '0.6rem 0.875rem' }}>✅ Knowledge Base Active</div>
+        : <div className="alert-info"    style={{ fontSize: '0.8rem', padding: '0.6rem 0.875rem' }}>ℹ️ Select a match to begin</div>
       }
-
       {hasContent && (
-        <div className="rounded-lg px-3 py-2 text-sm font-semibold" style={{ background: '#052e16', color: '#4ade80', border: '1px solid #4ade80' }}>
+        <div className="alert-success" style={{ fontSize: '0.8rem', padding: '0.6rem 0.875rem' }}>
           ✅ Content Ready to Publish
         </div>
       )}
 
-      <hr style={{ borderColor: '#2ca3ee', opacity: 0.35 }} />
+      <div style={{ flex: 1 }} />
+
+      <div style={{ height: 1, background: 'rgba(44,163,238,0.2)', margin: '0.25rem 0' }} />
+
+      {/* Quick guide */}
+      <div style={{ padding: '0.5rem 0.25rem' }}>
+        <div style={{
+          fontSize: '0.68rem', fontWeight: 700,
+          color: 'rgba(255,255,255,0.4)',
+          textTransform: 'uppercase', letterSpacing: '0.1em',
+          marginBottom: '0.75rem',
+        }}>📚 Quick Guide</div>
+        {[
+          ['Select',   'matches from dropdown'],
+          ['Build',    'knowledge base'],
+          ['Generate', 'content'],
+          ['Publish',  'live to website'],
+        ].map(([bold, rest], i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.6rem' }}>
+            <span className="step-badge" style={{ width: 20, height: 20, fontSize: '0.7rem', flexShrink: 0, marginTop: 2 }}>
+              {i + 1}
+            </span>
+            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.4 }}>
+              <strong style={{ color: '#e6fe00' }}>{bold}</strong> {rest}
+            </span>
+          </div>
+        ))}
+      </div>
 
       {/* Logout */}
       <button
         onClick={() => signOut({ callbackUrl: '/login' })}
-        className="w-full rounded-lg py-2 text-sm font-bold transition"
-        style={{ background: '#e6fe00', color: '#000' }}
+        className="btn-yellow"
+        style={{ width: '100%', fontSize: '0.85rem', padding: '0.7rem' }}
       >
         🚪 Logout
       </button>
 
-      <hr style={{ borderColor: '#2ca3ee', opacity: 0.35 }} />
-
-      {/* Quick guide */}
-      <div>
-        <p className="text-xs font-bold uppercase mb-2" style={{ color: '#2ca3ee', borderBottom: '2px solid #2ca3ee', paddingBottom: 4 }}>
-          📚 Quick Guide
-        </p>
-        <ol className="text-sm space-y-1" style={{ color: 'rgba(255,255,255,0.8)' }}>
-          {[
-            ['Select', 'matches from dropdown'],
-            ['Build', 'knowledge base'],
-            ['Generate', 'content'],
-            ['Publish', 'live to website'],
-          ].map(([bold, rest], i) => (
-            <li key={i}>
-              <span className="font-bold" style={{ color: '#e6fe00' }}>{i + 1}. {bold}</span> {rest}
-            </li>
-          ))}
-        </ol>
-      </div>
     </aside>
   )
 }

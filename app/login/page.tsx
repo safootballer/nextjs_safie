@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -22,57 +21,73 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-5xl font-black" style={{ color: '#2ca3ee' }}>SAFie</h1>
-        <p className="mt-1 text-sm font-bold tracking-widest uppercase" style={{ color: '#e6fe00' }}>
-          AI by SA Footballer
-        </p>
-        <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
+      {/* Background glow */}
+      <div style={{
+        position: 'fixed', top: '-20%', left: '50%', transform: 'translateX(-50%)',
+        width: '800px', height: '400px',
+        background: 'radial-gradient(ellipse, rgba(44,163,238,0.12) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Logos + brand */}
+      <div className="fade-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
+          <img src="/logo2.png" alt="SAFie" style={{ height: 56 }} onError={e => (e.currentTarget.style.display='none')} />
+          <img src="/logo.png"  alt="SA Footballer" style={{ height: 56 }} onError={e => (e.currentTarget.style.display='none')} />
+        </div>
+        <h1 style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 900, fontSize: '3.5rem', letterSpacing: '-0.02em',
+          color: '#2ca3ee', lineHeight: 1, margin: 0,
+        }}>SAFie</h1>
+        <div style={{ marginTop: '0.4rem' }}>
+          <span className="badge-yellow">AI by SA Footballer</span>
+        </div>
+        <p style={{ marginTop: '0.6rem', color: 'rgba(255,255,255,0.45)', fontSize: '0.875rem' }}>
           AI-Powered Match Report Generation
         </p>
       </div>
 
       {/* Login card */}
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl" style={{ borderTop: '5px solid #2ca3ee' }}>
-        <h2 className="text-2xl font-bold text-black mb-1">🔐 Welcome Back</h2>
-        <p className="text-sm text-gray-500 mb-6">Sign in to generate professional match reports</p>
+      <div className="fade-up-1 glass-card" style={{ width: '100%', maxWidth: 420, padding: '2.5rem' }}>
+        <h2 style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 800, fontSize: '1.5rem', letterSpacing: '0.04em',
+          textTransform: 'uppercase', color: '#fff', marginBottom: '0.25rem',
+        }}>🔐 Welcome Back</h2>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginBottom: '1.75rem' }}>
+          Sign in to generate professional match reports
+        </p>
 
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-            ❌ {error}
-          </div>
-        )}
+        {error && <div className="alert-error" style={{ marginBottom: '1rem' }}>❌ {error}</div>}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label className="block text-sm font-semibold text-black mb-1">👤 Username</label>
+            <label style={{
+              display: 'block', fontSize: '0.75rem', fontWeight: 700,
+              color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem',
+              textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}>Username</label>
             <input
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              className="w-full rounded-lg border-2 px-4 py-3 text-black text-sm outline-none transition"
-              style={{ borderColor: '#2ca3ee' }}
+              type="text" value={username} onChange={e => setUsername(e.target.value)}
+              placeholder="Enter your username" className="input-field"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-black mb-1">🔒 Password</label>
+            <label style={{
+              display: 'block', fontSize: '0.75rem', fontWeight: 700,
+              color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem',
+              textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}>Password</label>
             <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full rounded-lg border-2 px-4 py-3 text-black text-sm outline-none transition"
-              style={{ borderColor: '#2ca3ee' }}
+              type="password" value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="Enter your password" className="input-field"
             />
           </div>
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg py-3 font-bold text-white text-sm transition-all"
-            style={{ background: loading ? '#aaa' : 'linear-gradient(90deg,#2ca3ee,#00b8f1)' }}
+            type="submit" disabled={loading} className="btn-primary"
+            style={{ width: '100%', marginTop: '0.5rem', padding: '0.9rem' }}
           >
             {loading ? '⏳ Signing in…' : '🚀 Sign In'}
           </button>
@@ -80,27 +95,30 @@ export default function LoginPage() {
       </div>
 
       {/* Feature cards */}
-      <div className="mt-10 grid grid-cols-3 gap-4 w-full max-w-2xl">
+      <div className="fade-up-2" style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
+        gap: '1rem', width: '100%', maxWidth: 480, marginTop: '2rem',
+      }}>
         {[
-          { icon: '⚡', title: 'Fast', desc: 'Generate reports in seconds' },
-          { icon: '🎯', title: 'Accurate', desc: 'Powered by AI technology' },
-          { icon: '✍️', title: 'Professional', desc: 'Magazine-quality content' },
+          { icon: '⚡', title: 'Fast',         desc: 'Reports in seconds' },
+          { icon: '🎯', title: 'Accurate',     desc: 'AI-powered precision' },
+          { icon: '✍️', title: 'Professional', desc: 'Magazine quality' },
         ].map(f => (
-          <div key={f.title} className="rounded-xl bg-white p-5 text-center shadow-lg" style={{ borderBottom: '4px solid #e6fe00' }}>
-            <div className="text-3xl mb-2">{f.icon}</div>
-            <h4 className="font-bold text-sm" style={{ color: '#2ca3ee' }}>{f.title}</h4>
-            <p className="text-xs text-gray-600 mt-1">{f.desc}</p>
+          <div key={f.title} className="glass-card" style={{ padding: '1.25rem', textAlign: 'center', borderBottom: '3px solid #e6fe00' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.4rem' }}>{f.icon}</div>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: '#2ca3ee', fontSize: '0.95rem' }}>{f.title}</div>
+            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', marginTop: '0.2rem' }}>{f.desc}</div>
           </div>
         ))}
       </div>
 
       {/* Footer */}
-      <div className="mt-12 w-full max-w-2xl rounded-xl px-6 py-4 text-center text-xs" style={{ background: '#000', borderTop: '3px solid #2ca3ee' }}>
+      <div className="fade-up-3" style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
         <span style={{ color: '#2ca3ee', fontWeight: 700 }}>SAFie</span>
         {' · '}
         <span style={{ color: '#e6fe00', fontWeight: 600 }}>AI by SA Footballer</span>
         {' · '}
-        <span style={{ color: 'rgba(255,255,255,0.4)' }}>© 2026 The South Australian Footballer. All rights reserved.</span>
+        © 2026 The South Australian Footballer
       </div>
     </div>
   )
