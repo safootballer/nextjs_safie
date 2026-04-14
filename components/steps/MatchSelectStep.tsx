@@ -35,7 +35,7 @@ export function MatchSelectStep({ grouped, matches, loading, selectedIds, onSele
 
   const filteredGrouped: Record<string, MatchLink[]> = {}
   for (const [comp, compMatches] of Object.entries(grouped)) {
-    const recent = compMatches.filter(m => isWithinDays(m.date, 3))
+    const recent = compMatches.filter(m => isWithinDays(m.date, 7))
     if (recent.length > 0) filteredGrouped[comp] = recent
   }
 
@@ -184,7 +184,7 @@ export function MatchSelectStep({ grouped, matches, loading, selectedIds, onSele
                   <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     {comp}
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>No matches in last 3 days</span>
+                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>No matches in last 7 days</span>
                 </div>
               </div>
             ))}
