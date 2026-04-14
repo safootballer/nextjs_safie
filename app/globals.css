@@ -255,3 +255,28 @@ body {
   flex-shrink: 0;
   box-shadow: 0 0 12px rgba(44,163,238,0.4);
 }
+/* TipTap editor */
+.ProseMirror {
+  min-height: 300px;
+  outline: none;
+  font-family: 'Barlow', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: #111;
+}
+
+.ProseMirror p { margin-bottom: 0.75rem; }
+.ProseMirror h2 { font-size: 1.3rem; font-weight: 800; margin: 1.25rem 0 0.5rem; }
+.ProseMirror h3 { font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.4rem; }
+.ProseMirror ul { padding-left: 1.5rem; list-style: disc; margin-bottom: 0.75rem; }
+.ProseMirror ol { padding-left: 1.5rem; list-style: decimal; margin-bottom: 0.75rem; }
+.ProseMirror strong { font-weight: 700; }
+.ProseMirror em { font-style: italic; }
+.ProseMirror u { text-decoration: underline; }
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
