@@ -11,7 +11,6 @@ export function slugify(text: string): string {
 }
 
 function htmlToPortableText(html: string) {
-  // Plain text fallback
   if (!html.includes('<')) {
     return html.split('\n\n').map(p => p.trim()).filter(Boolean).map(para => ({
       _type: 'block',
@@ -28,31 +27,26 @@ function htmlToPortableText(html: string) {
   }
 
   const blocks: any[] = []
-
-  // Parse block-level elements
   const blockRegex = /<(h1|h2|h3|h4|p|li)[^>]*>([\s\S]*?)<\/\1>/gi
   let match
 
   while ((match = blockRegex.exec(html)) !== null) {
-    const tag     = match[1].toLowerCase()
-    const inner   = match[2]
-
+    const tag = match[1].toLowerCase()
+    const inner = match[2]
     const styleMap: Record<string, string> = {
       h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', p: 'normal', li: 'normal',
     }
     const style = styleMap[tag] ?? 'normal'
-
-    // Parse inline marks
     const children: any[] = []
     const inlineRegex = /<(strong|em|u|b|i)[^>]*>([\s\S]*?)<\/\1>|([^<]+)/gi
     let inlineMatch
-
     const cleanInner = inner.replace(/<br\s*\/?>/gi, '\n')
 
     while ((inlineMatch = inlineRegex.exec(cleanInner)) !== null) {
       if (inlineMatch[3] !== undefined) {
-        // Plain text
-        const text = inlineMatch[3].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+        const text = inlineMatch[3]
+          .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&nbsp;/g, ' ').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
         if (text.trim()) {
           children.push({
             _type: 'span',
@@ -62,11 +56,12 @@ function htmlToPortableText(html: string) {
           })
         }
       } else {
-        // Marked text (bold, italic, underline)
         const markTag = inlineMatch[1].toLowerCase()
         const markMap: Record<string, string> = { strong: 'strong', b: 'strong', em: 'em', i: 'em', u: 'underline' }
         const mark = markMap[markTag] ?? markTag
-        const text = inlineMatch[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
+        const text = inlineMatch[2].replace(/<[^>]+>/g, '')
+          .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&nbsp;/g, ' ')
         if (text.trim()) {
           children.push({
             _type: 'span',
@@ -94,7 +89,12 @@ function htmlToPortableText(html: string) {
     _key: uuidv4().replace(/-/g, '').slice(0, 12),
     style: 'normal',
     markDefs: [],
-    children: [{ _type: 'span', _key: uuidv4().replace(/-/g, '').slice(0, 12), text: html.replace(/<[^>]+>/g, ''), marks: [] }],
+    children: [{
+      _type: 'span',
+      _key: uuidv4().replace(/-/g, '').slice(0, 12),
+      text: html.replace(/<[^>]+>/g, ''),
+      marks: [],
+    }],
   }]
 }
 
@@ -192,38 +192,35 @@ export async function postToFacebook(
 
   try {
     if (imageBuffer) {
+      // Post photo directly to timeline with message in one call
       const formData = new FormData()
       const blob = new Blob([imageBuffer.buffer as ArrayBuffer], { type: 'image/jpeg' })
       formData.append('source', blob, imageName || 'photo.jpg')
-      formData.append('published', 'false')
-      formData.append('no_story', 'true')
+      formData.append('message', message)
+      formData.append('published', 'true')
       formData.append('access_token', pageToken)
 
-      const uploadRes = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photos`, {
+      const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photos`, {
         method: 'POST', body: formData,
       })
-      const uploadData = await uploadRes.json() as { id?: string; error?: { message: string } }
-      if (!uploadData.id) {
-        return { success: false, result: `Photo upload failed: ${uploadData.error?.message ?? JSON.stringify(uploadData)}` }
-      }
+      const data = await res.json() as { id?: string; post_id?: string; error?: { message: string } }
 
-      const feedForm = new FormData()
-      feedForm.append('message', message)
-      feedForm.append('attached_media[0]', JSON.stringify({ media_fbid: uploadData.id }))
-      feedForm.append('access_token', pageToken)
-
-      const feedRes  = await fetch(`https://graph.facebook.com/v19.0/${pageId}/feed`, { method: 'POST', body: feedForm })
-      const feedData = await feedRes.json() as { id?: string; error?: { message: string } }
-      if (feedData.id) {
-        return { success: true, result: `https://www.facebook.com/${pageId}/posts/${feedData.id.split('_').pop()}` }
+      if (data.post_id || data.id) {
+        const postId = (data.post_id ?? data.id ?? '').split('_').pop()
+        return { success: true, result: `https://www.facebook.com/${pageId}/posts/${postId}` }
       }
-      return { success: false, result: feedData.error?.message ?? JSON.stringify(feedData) }
+      return { success: false, result: data.error?.message ?? JSON.stringify(data) }
+
     } else {
+      // Text only post
       const form = new FormData()
       form.append('message', message)
+      form.append('published', 'true')
       form.append('access_token', pageToken)
+
       const res  = await fetch(`https://graph.facebook.com/v19.0/${pageId}/feed`, { method: 'POST', body: form })
       const data = await res.json() as { id?: string; error?: { message: string } }
+
       if (data.id) {
         return { success: true, result: `https://www.facebook.com/${pageId}/posts/${data.id.split('_').pop()}` }
       }
