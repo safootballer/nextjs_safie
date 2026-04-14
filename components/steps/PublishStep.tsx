@@ -90,18 +90,13 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       <SectionHeading step={4} title="Publish to Website" />
 
       {publishedSlug && (
-        <div className="alert-success" style={{ marginBottom: '1.25rem' }}>
-          🎉 Article is LIVE!{' '}
-          
-            href={`https://sa-footballer-website.vercel.app/editorials/${publishedSlug}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{ color: '#4ade80', textDecoration: 'underline' }}
-          >
-              {'View article →'}
-          </a>
+          <div className="alert-success" style={{ marginBottom: '1.25rem' }}>
+            {'🎉 Article is LIVE! '}
+            <a href={'https://sa-footballer-website.vercel.app/editorials/' + publishedSlug} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'underline' }}>
+              {'View article'}
+            </a>
           </div>
-            )}
+)}
 
       <div className="alert-info" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #e6fe00' }}>
         Fill in the details below and hit{' '}
