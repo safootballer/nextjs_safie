@@ -14,10 +14,16 @@ interface Props {
   contentType: string
   onContentTypeChange: (t: string) => void
   onGenerated: (content: string) => void
+  onContentChange: (content: string) => void
   generatedContent: string
 }
 
-function ToolbarBtn({ onClick, active, title, children }: { onClick: () => void; active?: boolean; title: string; children: React.ReactNode }) {
+function ToolbarBtn({ onClick, active, title, children }: {
+  onClick: () => void
+  active?: boolean
+  title: string
+  children: React.ReactNode
+}) {
   return (
     <button
       onClick={onClick}
@@ -39,7 +45,10 @@ function ToolbarBtn({ onClick, active, title, children }: { onClick: () => void;
   )
 }
 
-export function GenerateStep({ context, matchId, contentType, onContentTypeChange, onGenerated, generatedContent }: Props) {
+export function GenerateStep({
+  context, matchId, contentType, onContentTypeChange,
+  onGenerated, onContentChange, generatedContent,
+}: Props) {
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState('')
   const [fbText, setFbText]       = useState('')
@@ -51,6 +60,9 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
   const editor = useEditor({
     extensions: [StarterKit, Underline],
     content: '',
+    onUpdate: ({ editor }) => {
+      onContentChange(editor.getText())
+    },
     editorProps: {
       attributes: {
         style: [
@@ -68,20 +80,19 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
 
   useEffect(() => {
     if (editor && generatedContent) {
-      // Convert plain text to HTML paragraphs
       const html = generatedContent
         .split('\n\n')
         .filter(Boolean)
-        .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+        .map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>')
         .join('')
       editor.commands.setContent(html)
     }
-  }, [generatedContent, editor])
+  }, [generatedContent])
 
   async function generate() {
     setLoading(true); setError(''); onGenerated('')
     try {
-      const res  = await fetch('/api/generate', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context, contentType, matchId }),
@@ -100,11 +111,6 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
   function getEditorText(): string {
     if (!editor) return generatedContent
     return editor.getText()
-  }
-
-  function getEditorHTML(): string {
-    if (!editor) return ''
-    return editor.getHTML()
   }
 
   function copyText() {
@@ -138,7 +144,6 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
     <section className="fade-up">
       <SectionHeading step={3} title="Generate Content" />
 
-      {/* Controls */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
         <div style={{ flex: '1 1 260px' }}>
           <label style={labelStyle}>Content Type</label>
@@ -156,7 +161,12 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
       {generatedContent && editor && (
         <>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', marginTop: '1.5rem' }}>
-            <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '1.2rem', color: '#2ca3ee', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+            <h3 style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700, fontSize: '1.2rem',
+              color: '#2ca3ee', textTransform: 'uppercase',
+              letterSpacing: '0.04em', margin: 0,
+            }}>
               Generated Content
             </h3>
             <button onClick={copyText} className="btn-yellow" style={{ fontSize: '0.8rem', padding: '0.5rem 1.25rem' }}>
@@ -166,27 +176,46 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
 
           {/* Toolbar */}
           <div style={{
-            display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '8px 12px',
+            display: 'flex', flexWrap: 'wrap', gap: '4px',
+            padding: '8px 12px',
             background: 'rgba(255,255,255,0.05)',
             border: '1.5px solid rgba(44,163,238,0.3)',
             borderBottom: 'none',
             borderRadius: '10px 10px 0 0',
           }}>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">B</ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic"><em>I</em></ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline"><u>U</u></ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">
+              B
+            </ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic">
+              I
+            </ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline">
+              U
+            </ToolbarBtn>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2">H2</ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3">H3</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2">
+              H2
+            </ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3">
+              H3
+            </ToolbarBtn>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet list">• List</ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Numbered list">1. List</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet list">
+              {'• List'}
+            </ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Numbered list">
+              {'1. List'}
+            </ToolbarBtn>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
-            <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} title="Undo">Undo</ToolbarBtn>
-            <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} title="Redo">Redo</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} title="Undo">
+              Undo
+            </ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} title="Redo">
+              Redo
+            </ToolbarBtn>
           </div>
 
-          {/* Editor */}
+          {/* Editor area */}
           <div style={{
             background: '#fff',
             border: '1.5px solid rgba(44,163,238,0.3)',
@@ -201,9 +230,9 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
           {/* Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
             {[
-              ['Words',  getEditorText().split(/\s+/).filter(Boolean).length],
-              ['Chars',  getEditorText().length],
-              ['Type',   contentType.split(' ')[0]],
+              ['Words', getEditorText().split(/\s+/).filter(Boolean).length],
+              ['Chars', getEditorText().length],
+              ['Type',  contentType.split(' ')[0]],
             ].map(([label, val]) => (
               <div key={label as string} className="metric-card">
                 <div className="metric-label">{label}</div>
@@ -215,7 +244,12 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
           {/* Facebook */}
           {contentType === 'Social media long-form post' && (
             <div className="glass-card" style={{ padding: '1.5rem', borderTop: '3px solid #2ca3ee' }}>
-              <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '1.2rem', color: '#2ca3ee', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem' }}>
+              <h3 style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 800, fontSize: '1.2rem',
+                color: '#2ca3ee', textTransform: 'uppercase',
+                letterSpacing: '0.04em', marginBottom: '0.5rem',
+              }}>
                 Post to Facebook
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', marginBottom: '1rem' }}>
@@ -236,16 +270,25 @@ export function GenerateStep({ context, matchId, contentType, onContentTypeChang
 
               <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>Photo (optional)</label>
               <input
-                type="file" accept="image/jpg,image/jpeg,image/png"
+                type="file"
+                accept="image/jpg,image/jpeg,image/png"
                 onChange={e => setFbPhoto(e.target.files?.[0] ?? null)}
                 style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem', display: 'block' }}
               />
               {fbPhoto && (
-                <img src={URL.createObjectURL(fbPhoto)} alt="preview"
-                  style={{ width: 180, borderRadius: 10, marginBottom: '1rem', border: '1px solid rgba(44,163,238,0.4)' }} />
+                <img
+                  src={URL.createObjectURL(fbPhoto)}
+                  alt="preview"
+                  style={{ width: 180, borderRadius: 10, marginBottom: '1rem', border: '1px solid rgba(44,163,238,0.4)' }}
+                />
               )}
 
-              <button onClick={postToFacebook} disabled={fbLoading || fbText.length > 63206} className="btn-primary" style={{ width: '100%' }}>
+              <button
+                onClick={postToFacebook}
+                disabled={fbLoading || fbText.length > 63206}
+                className="btn-primary"
+                style={{ width: '100%' }}
+              >
                 {fbLoading ? 'Posting...' : 'Post to Facebook Now'}
               </button>
 

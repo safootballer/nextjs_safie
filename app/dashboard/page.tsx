@@ -64,11 +64,14 @@ export default function DashboardPage() {
             fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 900, fontSize: '2.5rem',
             color: '#2ca3ee', letterSpacing: '-0.01em', margin: 0,
-          }}>🏈 SAFie</h1>
+          }}>
+            SAFie
+          </h1>
           <span className="badge-yellow">AI by SA Footballer</span>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.9rem', marginTop: '0.4rem' }}>
-          Welcome back, <strong style={{ color: '#fff' }}>{session?.user?.name}</strong> 👋
+          {'Welcome back, '}
+          <strong style={{ color: '#fff' }}>{session?.user?.name}</strong>
         </p>
       </div>
 
@@ -100,6 +103,7 @@ export default function DashboardPage() {
             contentType={contentType}
             onContentTypeChange={setContentType}
             onGenerated={content => { setGeneratedContent(content); setPublishedSlug('') }}
+            onContentChange={content => setGeneratedContent(content)}
             generatedContent={generatedContent}
           />
         )}
@@ -126,7 +130,7 @@ export default function DashboardPage() {
         {' · '}
         <span style={{ color: '#e6fe00', fontWeight: 600 }}>AI by SA Footballer</span>
         {' · '}
-        © 2026 The South Australian Footballer
+        {'2026 The South Australian Footballer'}
       </div>
     </div>
   )
