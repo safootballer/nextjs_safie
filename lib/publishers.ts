@@ -10,23 +10,92 @@ export function slugify(text: string): string {
     .slice(0, 96)
 }
 
-function textToPortableText(text: string) {
-  let paragraphs = text.split('\n\n').map(p => p.trim()).filter(Boolean)
-  if (paragraphs.length <= 1) {
-    paragraphs = text.split('\n').map(p => p.trim()).filter(Boolean)
+function htmlToPortableText(html: string) {
+  // Plain text fallback
+  if (!html.includes('<')) {
+    return html.split('\n\n').map(p => p.trim()).filter(Boolean).map(para => ({
+      _type: 'block',
+      _key: uuidv4().replace(/-/g, '').slice(0, 12),
+      style: 'normal',
+      markDefs: [],
+      children: [{
+        _type: 'span',
+        _key: uuidv4().replace(/-/g, '').slice(0, 12),
+        text: para,
+        marks: [],
+      }],
+    }))
   }
-  return paragraphs.map(para => ({
+
+  const blocks: any[] = []
+
+  // Parse block-level elements
+  const blockRegex = /<(h1|h2|h3|h4|p|li)[^>]*>([\s\S]*?)<\/\1>/gi
+  let match
+
+  while ((match = blockRegex.exec(html)) !== null) {
+    const tag     = match[1].toLowerCase()
+    const inner   = match[2]
+
+    const styleMap: Record<string, string> = {
+      h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', p: 'normal', li: 'normal',
+    }
+    const style = styleMap[tag] ?? 'normal'
+
+    // Parse inline marks
+    const children: any[] = []
+    const inlineRegex = /<(strong|em|u|b|i)[^>]*>([\s\S]*?)<\/\1>|([^<]+)/gi
+    let inlineMatch
+
+    const cleanInner = inner.replace(/<br\s*\/?>/gi, '\n')
+
+    while ((inlineMatch = inlineRegex.exec(cleanInner)) !== null) {
+      if (inlineMatch[3] !== undefined) {
+        // Plain text
+        const text = inlineMatch[3].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+        if (text.trim()) {
+          children.push({
+            _type: 'span',
+            _key: uuidv4().replace(/-/g, '').slice(0, 12),
+            text,
+            marks: [],
+          })
+        }
+      } else {
+        // Marked text (bold, italic, underline)
+        const markTag = inlineMatch[1].toLowerCase()
+        const markMap: Record<string, string> = { strong: 'strong', b: 'strong', em: 'em', i: 'em', u: 'underline' }
+        const mark = markMap[markTag] ?? markTag
+        const text = inlineMatch[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
+        if (text.trim()) {
+          children.push({
+            _type: 'span',
+            _key: uuidv4().replace(/-/g, '').slice(0, 12),
+            text,
+            marks: [mark],
+          })
+        }
+      }
+    }
+
+    if (children.length > 0) {
+      blocks.push({
+        _type: 'block',
+        _key: uuidv4().replace(/-/g, '').slice(0, 12),
+        style,
+        markDefs: [],
+        children,
+      })
+    }
+  }
+
+  return blocks.length > 0 ? blocks : [{
     _type: 'block',
     _key: uuidv4().replace(/-/g, '').slice(0, 12),
     style: 'normal',
     markDefs: [],
-    children: [{
-      _type: 'span',
-      _key: uuidv4().replace(/-/g, '').slice(0, 12),
-      text: para,
-      marks: [],
-    }],
-  }))
+    children: [{ _type: 'span', _key: uuidv4().replace(/-/g, '').slice(0, 12), text: html.replace(/<[^>]+>/g, ''), marks: [] }],
+  }]
 }
 
 export async function publishToSanity({
@@ -59,7 +128,7 @@ export async function publishToSanity({
     slug: { _type: 'slug', current: slug },
     competition,
     excerpt,
-    content: textToPortableText(contentText),
+    content: htmlToPortableText(contentText),
     author,
     publishedAt: new Date().toISOString(),
   }
@@ -89,15 +158,15 @@ export function cleanForFacebook(text: string): string {
   text = text.replace(/__(.*?)__/g, '$1').replace(/_(.*?)_/g, '$1')
 
   const replacements: Array<[RegExp, string]> = [
-    [/^#+\s*ATTENTION.*$/gim, '🔥 '],
-    [/^#+\s*THE STORY.*$/gim, '📖 THE STORY'],
-    [/^#+\s*THE HEROES.*$/gim, '⭐ THE HEROES'],
-    [/^#+\s*BY THE NUMBERS.*$/gim, '📊 BY THE NUMBERS'],
-    [/^#+\s*CLOSING.*$/gim, '👇 '],
-    [/^#+\s*KEY MOMENTS.*$/gim, '⚡ KEY MOMENTS'],
-    [/^#+\s*PLAYER PERFORMANCES.*$/gim, '💪 PLAYER PERFORMANCES'],
-    [/^#+\s*THE STATS.*$/gim, '📊 THE STATS'],
-    [/^#+\s*WHAT IT MEANS.*$/gim, '🏆 WHAT IT MEANS'],
+    [/^#+\s*ATTENTION.*$/gim, ''],
+    [/^#+\s*THE STORY.*$/gim, 'THE STORY'],
+    [/^#+\s*THE HEROES.*$/gim, 'THE HEROES'],
+    [/^#+\s*BY THE NUMBERS.*$/gim, 'BY THE NUMBERS'],
+    [/^#+\s*CLOSING.*$/gim, ''],
+    [/^#+\s*KEY MOMENTS.*$/gim, 'KEY MOMENTS'],
+    [/^#+\s*PLAYER PERFORMANCES.*$/gim, 'PLAYER PERFORMANCES'],
+    [/^#+\s*THE STATS.*$/gim, 'THE STATS'],
+    [/^#+\s*WHAT IT MEANS.*$/gim, 'WHAT IT MEANS'],
     [/^#+\s*HEADLINE.*$/gim, ''],
     [/^#+\s*/gim, ''],
   ]

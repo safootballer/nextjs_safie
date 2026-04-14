@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [kbResults, setKbResults]           = useState<KBResult[]>([])
   const [kbReady, setKbReady]               = useState(false)
   const [generatedContent, setGeneratedContent] = useState('')
+  const [editedHTML, setEditedHTML]         = useState('')
   const [contentType, setContentType]       = useState('Magazine match report')
   const [publishedSlug, setPublishedSlug]   = useState('')
 
@@ -50,6 +51,7 @@ export default function DashboardPage() {
     setKbReady(false)
     setKbResults([])
     setGeneratedContent('')
+    setEditedHTML('')
     setPublishedSlug('')
     window.dispatchEvent(new Event('safie:reset'))
   }
@@ -57,16 +59,13 @@ export default function DashboardPage() {
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', paddingBottom: '5rem' }}>
 
-      {/* Header */}
       <div className="fade-up" style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', flexWrap: 'wrap' }}>
           <h1 style={{
             fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 900, fontSize: '2.5rem',
             color: '#2ca3ee', letterSpacing: '-0.01em', margin: 0,
-          }}>
-            SAFie
-          </h1>
+          }}>SAFie</h1>
           <span className="badge-yellow">AI by SA Footballer</span>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.9rem', marginTop: '0.4rem' }}>
@@ -77,7 +76,6 @@ export default function DashboardPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
 
-        {/* Step 1 */}
         <MatchSelectStep
           grouped={grouped}
           matches={matches}
@@ -86,7 +84,6 @@ export default function DashboardPage() {
           onSelectionChange={resetAll}
         />
 
-        {/* Step 2 */}
         {selectedIds.length > 0 && (
           <KnowledgeStep
             selectedIds={selectedIds}
@@ -95,23 +92,25 @@ export default function DashboardPage() {
           />
         )}
 
-        {/* Step 3 */}
         {kbReady && (
           <GenerateStep
             context={combinedContext}
             matchId={firstMatchId}
             contentType={contentType}
             onContentTypeChange={setContentType}
-            onGenerated={content => { setGeneratedContent(content); setPublishedSlug('') }}
-            onContentChange={content => setGeneratedContent(content)}
+            onGenerated={content => {
+              setGeneratedContent(content)
+              setEditedHTML('')
+              setPublishedSlug('')
+            }}
+            onContentChange={html => setEditedHTML(html)}
             generatedContent={generatedContent}
           />
         )}
 
-        {/* Step 4 */}
         {generatedContent && (
           <PublishStep
-            content={generatedContent}
+            content={editedHTML || generatedContent}
             contentType={contentType}
             meta={firstMeta}
             publishedSlug={publishedSlug}
@@ -120,7 +119,6 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Footer */}
       <div style={{
         marginTop: '4rem', textAlign: 'center',
         fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)',
