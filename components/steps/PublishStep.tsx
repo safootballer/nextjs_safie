@@ -23,19 +23,33 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const cleanTitle = (content.split('\n').map(l => l.trim()).find(l => l.length > 5) ?? '')
     .replace(/^#+\s*/, '').replace(/\*+/g, '').slice(0, 120)
 
-  const [title, setTitle]                     = useState(cleanTitle)
-  const [slug, setSlug]                       = useState(slugify(cleanTitle))
-  const [excerpt, setExcerpt]                 = useState('')
-  const [author, setAuthor]                   = useState(AUTHORS[0])
-  const [competition, setCompetition]         = useState('AFL')
-  const [countryLeague, setCountryLeague]     = useState('')
-  const [loading, setLoading]                 = useState(false)
-  const [error, setError]                     = useState('')
+  const [title, setTitle]                 = useState(cleanTitle)
+  const [slug, setSlug]                   = useState(slugify(cleanTitle))
+  const [excerpt, setExcerpt]             = useState('')
+  const [author, setAuthor]               = useState(AUTHORS[0])
+  const [competition, setCompetition]     = useState('AFL')
+  const [countryLeague, setCountryLeague] = useState('')
+  const [loading, setLoading]             = useState(false)
+  const [error, setError]                 = useState('')
 
   useEffect(() => {
     const lines = content.split('\n').map(l => l.trim()).filter(Boolean)
-    const ex = lines.find(l => l.length > 80 && !l.startsWith('#') && !l.startsWith('**') && !l.startsWith('|'))
-    setExcerpt((ex ?? lines[0] ?? '').slice(0, 300))
+    const ex = lines.find(l =>
+      l.length > 60 &&
+      !l.startsWith('#') &&
+      !l.startsWith('**') &&
+      !l.startsWith('|') &&
+      !l.startsWith('*') &&
+      !l.startsWith('-') &&
+      !l.match(/^\d+\./)
+    )
+    const raw = (ex ?? lines[0] ?? '').slice(0, 400)
+    const lastStop = Math.max(
+      raw.lastIndexOf('. ', 299),
+      raw.lastIndexOf('! ', 299),
+      raw.lastIndexOf('? ', 299)
+    )
+    setExcerpt(lastStop > 80 ? raw.slice(0, lastStop + 1) : raw.slice(0, 300))
   }, [content])
 
   useEffect(() => {
@@ -69,7 +83,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     setLoading(false)
     if (data.success) {
       if (!asDraft) onPublished(data.slug)
-      else alert('💾 Draft saved in Sanity Studio!')
+      else alert('Draft saved in Sanity Studio!')
     } else {
       setError(data.error ?? 'Publish failed')
     }
@@ -90,23 +104,20 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       <SectionHeading step={4} title="Publish to Website" />
 
       {publishedSlug && (
-          <div className="alert-success" style={{ marginBottom: '1.25rem' }}>
-            {'🎉 Article is LIVE! '}
-            <a href={'https://sa-footballer-website.vercel.app/editorials/' + publishedSlug} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'underline' }}>
-              {'View article'}
-            </a>
-          </div>
-)}
+        <div className="alert-success" style={{ marginBottom: '1.25rem' }}>
+          {'Article is LIVE! '}
+          <a href={'https://sa-footballer-website.vercel.app/editorials/' + publishedSlug} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'underline' }}>{'View article'}</a>
+        </div>
+      )}
 
       <div className="alert-info" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #e6fe00' }}>
-        Fill in the details below and hit{' '}
-        <strong style={{ color: '#e6fe00' }}>Publish Live</strong>{' '}
-        — appears on the website immediately.
+        {'Fill in the details below and hit '}
+        <strong style={{ color: '#e6fe00' }}>Publish Live</strong>
+        {' — appears on the website immediately.'}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
 
-        {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label style={labelStyle}>Article Title *</label>
@@ -125,10 +136,18 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
             />
           </div>
           <div>
-            <label style={labelStyle}>Excerpt *</label>
+            <label style={labelStyle}>
+              {'Excerpt * '}
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, textTransform: 'none', fontSize: '0.7rem' }}>
+                ({excerpt.length}/300 chars)
+              </span>
+            </label>
             <textarea
-              value={excerpt} onChange={e => setExcerpt(e.target.value)}
-              rows={3} className="input-field"
+              value={excerpt}
+              onChange={e => setExcerpt(e.target.value.slice(0, 300))}
+              rows={4}
+              className="input-field"
+              placeholder="Short summary shown on editorial cards..."
             />
           </div>
           <div>
@@ -139,7 +158,6 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
           </div>
         </div>
 
-        {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label style={labelStyle}>Competition *</label>
@@ -160,10 +178,10 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
           )}
 
           {!ready && (
-            <div className="alert-warning">⚠️ Fill in Title, Slug and Excerpt to publish.</div>
+            <div className="alert-warning">Fill in Title, Slug and Excerpt to publish.</div>
           )}
           {error && (
-            <div className="alert-error">❌ {error}</div>
+            <div className="alert-error">{error}</div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
@@ -173,7 +191,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
               className="btn-primary"
               style={{ width: '100%', padding: '0.9rem' }}
             >
-              {loading ? '📡 Publishing…' : '🚀 Publish Live Now'}
+              {loading ? 'Publishing...' : 'Publish Live Now'}
             </button>
             <button
               onClick={() => publish(true)}
@@ -181,7 +199,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
               className="btn-yellow"
               style={{ width: '100%', padding: '0.9rem' }}
             >
-              💾 Save as Draft
+              {'Save as Draft'}
             </button>
           </div>
         </div>
