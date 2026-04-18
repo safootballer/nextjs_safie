@@ -80,6 +80,7 @@ export function GenerateStep({
 
   useEffect(() => {
     if (editor && generatedContent && !generatedContent.startsWith('<')) {
+      // Each \n\n becomes a new <p>, each single \n becomes a <br> inside a <p>
       const html = generatedContent
         .split('\n\n')
         .filter(Boolean)
@@ -219,6 +220,12 @@ export function GenerateStep({
               active={editor.isActive('orderedList')} title="Numbered list"
             >{'1. List'}</ToolbarBtn>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
+            {/* New line button — inserts a hard paragraph break */}
+            <ToolbarBtn
+              onClick={() => editor.chain().focus().splitBlock().run()}
+              title="Insert new paragraph"
+            >{'↵ New Line'}</ToolbarBtn>
+            <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
             <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} title="Undo">Undo</ToolbarBtn>
             <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} title="Redo">Redo</ToolbarBtn>
           </div>
@@ -234,6 +241,11 @@ export function GenerateStep({
           }}>
             <EditorContent editor={editor} />
           </div>
+
+          {/* Helper text */}
+          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginBottom: '1.25rem', marginTop: '-0.75rem' }}>
+            Press <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Enter</strong> for new paragraph · <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Shift+Enter</strong> for line break within paragraph · Use toolbar buttons for formatting
+          </p>
 
           {/* Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
