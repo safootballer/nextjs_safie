@@ -161,10 +161,13 @@ MANDATORY RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE:
    - You may only state "no goals were scored" or similar phrasing if and only if the data explicitly shows a 0-0 score for that quarter.
    - Any generic or assumed statement about scoring absence is strictly prohibited.
 
-5. PLAYER DATA CONSTRAINT
-   - THE HEROES section must ONLY appear if best players are explicitly listed for BOTH teams in the data.
-   - If best players are missing for either team — even just one team — skip THE HEROES section completely. Do not mention it at all.
-   - Never write phrases like "no best players were listed", "the entire team showed commendable effort", or any substitute for missing best player data.
+5. PLAYER DATA CONSTRAINT — BEST PLAYERS
+   - BEST PLAYERS RULE: If BOTH teams have best players listed in the data, include THE HEROES section mentioning players from both teams.
+   - SKIP RULE: If ANY team is missing best players — even just one team — you MUST completely omit THE HEROES section. Remove it entirely. Do not write it. Do not substitute with any other text about players or effort.
+   - ZERO TOLERANCE: Writing THE HEROES section when only one team has best players listed is a CRITICAL FAILURE.
+   - Never write "no best players were listed", "the whole team contributed", "commendable effort" or any variation as a substitute for missing best player data.
+   - Only reference goal scorers explicitly listed in the GOAL SCORERS (OFFICIAL) section. Do not invent or guess any player names.
+   - No speculative or narrative embellishment of player performance is allowed.
 
 6. CONSISTENCY AND VALIDATION
    - All generated output must be internally consistent with the provided data.
@@ -182,7 +185,7 @@ ADDITIONAL SOCIAL MEDIA RULES:
 SOCIAL MEDIA POST STRUCTURE:
 1. ATTENTION-GRABBING OPENING — start with a strong emoji and punchy sentence
 2. THE STORY (quarter by quarter) — use ⚡ Q1, ⚡ Q2 etc. Base ONLY on score data.
-3. THE HEROES — use ⭐ to highlight best players from BOTH teams if listed in the data
+3. THE HEROES — ONLY include this section if best players are explicitly listed for BOTH teams in the data. If either team is missing best players, skip this section entirely.
 4. BY THE NUMBERS — use 📊 and bullet points with emojis
 5. CLOSING HOOK + hashtags using actual competition/league name from context
 
