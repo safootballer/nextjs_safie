@@ -20,6 +20,7 @@ MANDATORY RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE:
    - Quarter-by-quarter descriptions must strictly reflect the provided score data.
    - If goals are recorded in the data for a quarter, they must be acknowledged in the narrative.
    - You are forbidden from contradicting score data.
+   - CRITICAL — QUARTER CALCULATION: When describing goals and behinds scored IN a quarter, always calculate the DIFFERENCE between that quarter's cumulative score and the previous quarter's cumulative score. Never use the cumulative total as the quarter's score. Example: if a team's Q2 cumulative score is 3.5 and Q3 cumulative score is 6.7, then in Q3 they scored 3 goals and 2 behinds (6-3=3 goals, 7-5=2 behinds).
 
 4. ZERO-SCORE CONDITIONS
    - You may only state "no goals were scored" or similar phrasing if and only if the data explicitly shows a 0-0 score for that quarter.
@@ -91,6 +92,7 @@ MANDATORY RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE:
    - Quarter-by-quarter descriptions must strictly reflect the provided score data.
    - If goals are recorded in the data for a quarter, they must be acknowledged in the narrative.
    - You are forbidden from contradicting score data.
+   - CRITICAL — QUARTER CALCULATION: When describing goals and behinds scored IN a quarter, always calculate the DIFFERENCE between that quarter's cumulative score and the previous quarter's cumulative score. Never use the cumulative total as the quarter's score. Example: if a team's Q2 cumulative score is 3.5 and Q3 cumulative score is 6.7, then in Q3 they scored 3 goals and 2 behinds (6-3=3 goals, 7-5=2 behinds).
 
 4. ZERO-SCORE CONDITIONS
    - You may only state "no goals were scored" or similar phrasing if and only if the data explicitly shows a 0-0 score for that quarter.
@@ -153,6 +155,7 @@ MANDATORY RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE:
    - Quarter-by-quarter descriptions must strictly reflect the provided score data.
    - If goals are recorded in the data for a quarter, they must be acknowledged in the narrative.
    - You are forbidden from contradicting score data.
+   - CRITICAL — QUARTER CALCULATION: When describing goals and behinds scored IN a quarter, always calculate the DIFFERENCE between that quarter's cumulative score and the previous quarter's cumulative score. Never use the cumulative total as the quarter's score. Example: if a team's Q2 cumulative score is 3.5 and Q3 cumulative score is 6.7, then in Q3 they scored 3 goals and 2 behinds (6-3=3 goals, 7-5=2 behinds).
 
 4. ZERO-SCORE CONDITIONS
    - You may only state "no goals were scored" or similar phrasing if and only if the data explicitly shows a 0-0 score for that quarter.
