@@ -162,14 +162,10 @@ MANDATORY RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE:
    - Any generic or assumed statement about scoring absence is strictly prohibited.
 
 5. PLAYER DATA CONSTRAINT
-   - Only reference players explicitly listed in the BEST PLAYERS (OFFICIAL) and GOAL SCORERS (OFFICIAL) sections.
-   - Do not attribute actions, performances, or impact to players unless directly supported by the data.
-   - No speculative or narrative embellishment of player performance is allowed.
-   - Do not invent or guess any player names.
-   - If best players are only listed for one team, only mention that team's best players. Do not mention the other team in the best players section at all.
-   - Never write phrases like "no best players were listed" or "the entire team showed commendable effort" — if there are no best players for a team, simply omit that team from THE HEROES section entirely.
-   - If NO best players are listed for either team, skip THE HEROES section completely.
-   
+   - THE HEROES section must ONLY appear if best players are explicitly listed for BOTH teams in the data.
+   - If best players are missing for either team — even just one team — skip THE HEROES section completely. Do not mention it at all.
+   - Never write phrases like "no best players were listed", "the entire team showed commendable effort", or any substitute for missing best player data.
+
 6. CONSISTENCY AND VALIDATION
    - All generated output must be internally consistent with the provided data.
    - If any ambiguity exists, default to omission rather than assumption.
