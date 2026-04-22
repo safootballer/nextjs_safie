@@ -10,6 +10,12 @@ interface Meta {
   competition: string
   detectedCountryLeague: string | null
   isCountryFootball: boolean
+  homeTeam: string
+  awayTeam: string
+  homeScore: number
+  awayScore: number
+  date: string
+  venue: string
 }
 interface Props {
   content: string
@@ -35,6 +41,18 @@ function stripHtml(html: string): string {
     .trim()
 }
 
+// Convert PlayHQ score number to goals.behinds format
+// e.g. 80 → find closest: 80 = 11*6 + 14 = 80? just show as plain number
+function formatScore(score: number): string {
+  if (!score && score !== 0) return ''
+  // Try to express as goals.behinds (goals*6 + behinds = score)
+  for (let g = Math.floor(score / 6); g >= 0; g--) {
+    const b = score - g * 6
+    if (b >= 0 && b < 20) return `${g}.${b} (${score})`
+  }
+  return String(score)
+}
+
 export function PublishStep({ content, contentType, meta, publishedSlug, onPublished }: Props) {
   const plain = stripHtml(content)
   const cleanTitle = (plain.split('\n').map(l => l.trim()).find(l => l.length > 5) ?? '')
@@ -46,6 +64,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const [competition, setCompetition]     = useState('AFL')
   const [countryLeague, setCountryLeague] = useState('')
 
+  // Match result fields — pre-filled from meta
   const [homeTeam, setHomeTeam]   = useState('')
   const [awayTeam, setAwayTeam]   = useState('')
   const [homeScore, setHomeScore] = useState('')
@@ -57,8 +76,33 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
 
+  // Pre-fill from meta when it arrives
   useEffect(() => {
     if (!meta) return
+
+    // Teams
+    if (meta.homeTeam) setHomeTeam(meta.homeTeam)
+    if (meta.awayTeam) setAwayTeam(meta.awayTeam)
+
+    // Scores
+    if (meta.homeScore) setHomeScore(formatScore(meta.homeScore))
+    if (meta.awayScore) setAwayScore(formatScore(meta.awayScore))
+
+    // Venue
+    if (meta.venue) setVenue(meta.venue)
+
+    // Date — convert to datetime-local format (YYYY-MM-DDTHH:MM)
+    if (meta.date) {
+      try {
+        const d = new Date(meta.date)
+        if (!isNaN(d.getTime())) {
+          const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+          setMatchDate(local.toISOString().slice(0, 16))
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Competition
     if (meta.isCountryFootball) {
       setCompetition('Country Football')
       setCountryLeague(meta.detectedCountryLeague ?? '')
@@ -70,7 +114,6 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
   useEffect(() => { setSlug(slugify(title)) }, [title])
 
-  // For Country Football, also require countryLeague
   const ready = Boolean(
     title && slug && homeTeam && awayTeam && homeScore && awayScore && matchDate &&
     (competition !== 'Country Football' || countryLeague)
@@ -82,20 +125,11 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title,
-        slug,
-        competition,
-        contentText: content,
-        author,
+        title, slug, competition,
+        contentText: content, author,
         countryLeague: competition === 'Country Football' ? countryLeague : null,
-        homeTeam,
-        awayTeam,
-        homeScore,
-        awayScore,
-        matchDate,
-        venue,
-        round,
-        asDraft,
+        homeTeam, awayTeam, homeScore, awayScore,
+        matchDate, venue, round, asDraft,
       }),
     })
     const data = await res.json()
@@ -108,7 +142,6 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     }
   }
 
-  // Show correct live URL depending on competition
   const baseUrl = 'https://www.safootballer.com.au'
   const liveUrl = competition === 'Country Football' && countryLeague
     ? `${baseUrl}/country-football?league=${countryLeague}`
@@ -138,7 +171,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       )}
 
       <div className="alert-info" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #e6fe00' }}>
-        {'Fill in the match details below and hit '}
+        {'Match details have been pre-filled from PlayHQ. Verify and hit '}
         <strong style={{ color: '#e6fe00' }}>{'Publish Live'}</strong>
         {competition === 'Country Football'
           ? ' — appears on the Country Football page immediately.'
