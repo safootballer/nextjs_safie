@@ -34,7 +34,6 @@ function htmlToPortableText(html: string) {
     }
     const style = styleMap[tag] ?? 'normal'
 
-    // Split by <br> — each <br> becomes its own paragraph block
     const parts = inner.split(/<br\s*\/?>/gi)
 
     for (const part of parts) {
@@ -103,15 +102,23 @@ function htmlToPortableText(html: string) {
 }
 
 export async function publishToSanity({
-  title, slug, competition, excerpt, contentText, author, countryLeague, asDraft = false,
+  title, slug, competition, contentText, author, countryLeague,
+  homeTeam, awayTeam, homeScore, awayScore, matchDate, venue, round,
+  asDraft = false,
 }: {
   title: string
   slug: string
   competition: string
-  excerpt: string
   contentText: string
   author: string
   countryLeague?: string | null
+  homeTeam: string
+  awayTeam: string
+  homeScore: string
+  awayScore: string
+  matchDate: string
+  venue?: string
+  round?: string
   asDraft?: boolean
 }): Promise<{ success: boolean; result: string }> {
   const projectId = process.env.SANITY_PROJECT_ID
@@ -122,19 +129,24 @@ export async function publishToSanity({
     return { success: false, result: 'Sanity credentials not configured.' }
   }
 
-  const docId = `${asDraft ? 'drafts.' : ''}editorial-${uuidv4().replace(/-/g, '').slice(0, 16)}`
+  const docId = `${asDraft ? 'drafts.' : ''}matchresult-${uuidv4().replace(/-/g, '').slice(0, 16)}`
   const url   = `https://${projectId}.api.sanity.io/v2024-01-01/data/mutate/${dataset}`
 
   const doc: Record<string, unknown> = {
-    _id: docId,
-    _type: 'editorial',
+    _id:         docId,
+    _type:       'matchResult',
     title,
-    slug: { _type: 'slug', current: slug },
+    slug:        { _type: 'slug', current: slug },
     competition,
-    excerpt,
-    content: htmlToPortableText(contentText),
+    homeTeam,
+    awayTeam,
+    homeScore,
+    awayScore,
+    matchDate:   new Date(matchDate).toISOString(),
+    venue:       venue ?? '',
+    round:       round ?? '',
+    content:     htmlToPortableText(contentText),
     author,
-    publishedAt: new Date().toISOString(),
   }
 
   if (competition === 'Country Football' && countryLeague) {

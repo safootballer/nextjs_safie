@@ -6,7 +6,7 @@ import Underline from '@tiptap/extension-underline'
 import { SectionHeading } from './MatchSelectStep'
 import { cleanForFacebook } from '@/lib/publishers'
 
-const CONTENT_TYPES = ['Magazine match report', 'Web article', 'Social media long-form post']
+const CONTENT_TYPES = ['Magazine match report', 'Social media long-form post']
 
 interface Props {
   context: string
@@ -80,7 +80,6 @@ export function GenerateStep({
 
   useEffect(() => {
     if (editor && generatedContent && !generatedContent.startsWith('<')) {
-      // Each \n\n becomes a new <p>, each single \n becomes a <br> inside a <p>
       const html = generatedContent
         .split('\n\n')
         .filter(Boolean)
@@ -185,46 +184,18 @@ export function GenerateStep({
             borderBottom: 'none',
             borderRadius: '10px 10px 0 0',
           }}>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              active={editor.isActive('bold')} title="Bold"
-            >B</ToolbarBtn>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              active={editor.isActive('italic')} title="Italic"
-            >I</ToolbarBtn>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              active={editor.isActive('underline')} title="Underline"
-            >U</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">B</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic">I</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline">U</ToolbarBtn>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-              active={editor.isActive('heading', { level: 1 })} title="Heading 1"
-            >H1</ToolbarBtn>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-              active={editor.isActive('heading', { level: 2 })} title="Heading 2"
-            >H2</ToolbarBtn>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-              active={editor.isActive('heading', { level: 3 })} title="Heading 3"
-            >H3</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} title="Heading 1">H1</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2">H2</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3">H3</ToolbarBtn>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              active={editor.isActive('bulletList')} title="Bullet list"
-            >{'• List'}</ToolbarBtn>
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              active={editor.isActive('orderedList')} title="Numbered list"
-            >{'1. List'}</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet list">{'• List'}</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Numbered list">{'1. List'}</ToolbarBtn>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
-            {/* New line button — inserts a hard paragraph break */}
-            <ToolbarBtn
-              onClick={() => editor.chain().focus().splitBlock().run()}
-              title="Insert new paragraph"
-            >{'↵ New Line'}</ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().splitBlock().run()} title="Insert new paragraph">{'↵ New Line'}</ToolbarBtn>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
             <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} title="Undo">Undo</ToolbarBtn>
             <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} title="Redo">Redo</ToolbarBtn>
@@ -242,7 +213,6 @@ export function GenerateStep({
             <EditorContent editor={editor} />
           </div>
 
-          {/* Helper text */}
           <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginBottom: '1.25rem', marginTop: '-0.75rem' }}>
             Press <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Enter</strong> for new paragraph · <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Shift+Enter</strong> for line break within paragraph · Use toolbar buttons for formatting
           </p>

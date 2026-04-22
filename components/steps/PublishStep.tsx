@@ -40,35 +40,23 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const cleanTitle = (plain.split('\n').map(l => l.trim()).find(l => l.length > 5) ?? '')
     .replace(/^#+\s*/, '').replace(/\*+/g, '').slice(0, 120)
 
-  const [title, setTitle]             = useState(cleanTitle)
-  const [slug, setSlug]               = useState(slugify(cleanTitle))
-  const [excerpt, setExcerpt]         = useState('')
-  const [author, setAuthor]           = useState(AUTHORS[0])
-  const [competition, setCompetition] = useState('AFL')
+  const [title, setTitle]               = useState(cleanTitle)
+  const [slug, setSlug]                 = useState(slugify(cleanTitle))
+  const [author, setAuthor]             = useState(AUTHORS[0])
+  const [competition, setCompetition]   = useState('AFL')
   const [countryLeague, setCountryLeague] = useState('')
-  const [loading, setLoading]         = useState(false)
-  const [error, setError]             = useState('')
 
-  useEffect(() => {
-    const plainContent = stripHtml(content)
-    const lines = plainContent.split('\n').map(l => l.trim()).filter(Boolean)
-    const ex = lines.find(l =>
-      l.length > 60 &&
-      !l.startsWith('#') &&
-      !l.startsWith('**') &&
-      !l.startsWith('|') &&
-      !l.startsWith('*') &&
-      !l.startsWith('-') &&
-      !l.match(/^\d+\./)
-    )
-    const raw = (ex ?? lines[0] ?? '').slice(0, 400)
-    const lastStop = Math.max(
-      raw.lastIndexOf('. ', 299),
-      raw.lastIndexOf('! ', 299),
-      raw.lastIndexOf('? ', 299)
-    )
-    setExcerpt(lastStop > 80 ? raw.slice(0, lastStop + 1) : raw.slice(0, 300))
-  }, [content])
+  // Match result fields
+  const [homeTeam, setHomeTeam]         = useState('')
+  const [awayTeam, setAwayTeam]         = useState('')
+  const [homeScore, setHomeScore]       = useState('')
+  const [awayScore, setAwayScore]       = useState('')
+  const [matchDate, setMatchDate]       = useState('')
+  const [venue, setVenue]               = useState('')
+  const [round, setRound]               = useState('')
+
+  const [loading, setLoading]           = useState(false)
+  const [error, setError]               = useState('')
 
   useEffect(() => {
     if (!meta) return
@@ -83,7 +71,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
   useEffect(() => { setSlug(slugify(title)) }, [title])
 
-  const ready = Boolean(title && slug && excerpt)
+  const ready = Boolean(title && slug && homeTeam && awayTeam && homeScore && awayScore && matchDate)
 
   async function publish(asDraft: boolean) {
     setLoading(true); setError('')
@@ -91,9 +79,19 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title, slug, competition, excerpt,
-        contentText: content, author,
+        title,
+        slug,
+        competition,
+        contentText: content,
+        author,
         countryLeague: competition === 'Country Football' ? countryLeague : null,
+        homeTeam,
+        awayTeam,
+        homeScore,
+        awayScore,
+        matchDate,
+        venue,
+        round,
         asDraft,
       }),
     })
@@ -117,7 +115,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     display: 'block' as const,
   }
 
-  const liveUrl = 'https://sa-footballer-website.vercel.app/editorials/' + publishedSlug
+  const liveUrl = 'https://sa-footballer-website.vercel.app/match-results/' + publishedSlug
 
   return (
     <section className="fade-up">
@@ -125,41 +123,86 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
       {publishedSlug && (
         <div className="alert-success" style={{ marginBottom: '1.25rem' }}>
-          {'Article is LIVE! '}<a href={liveUrl} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'underline' }}>{'View article'}</a>
+          {'Match report is LIVE! '}
+          <a href={liveUrl} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'underline' }}>
+            {'View match report'}
+          </a>
         </div>
       )}
 
       <div className="alert-info" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #e6fe00' }}>
-        {'Fill in the details below and hit '}<strong style={{ color: '#e6fe00' }}>{'Publish Live'}</strong>{' - appears on the website immediately.'}
+        {'Fill in the match details below and hit '}
+        <strong style={{ color: '#e6fe00' }}>{'Publish Live'}</strong>
+        {' — appears on the website immediately.'}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
 
+        {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
           <div>
             <label style={labelStyle}>{'Article Title *'}</label>
-            <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Glenelg Dominate in 45-Point Victory" className="input-field" />
+            <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Glenelg Dominate in 45-Point Victory" className="input-field" />
           </div>
+
           <div>
             <label style={labelStyle}>{'Slug (URL path) *'}</label>
-            <input type="text" value={slug} onChange={e => setSlug(e.target.value)} className="input-field" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} />
+            <input type="text" value={slug} onChange={e => setSlug(e.target.value)}
+              className="input-field" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} />
           </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={labelStyle}>{'Home Team *'}</label>
+              <input type="text" value={homeTeam} onChange={e => setHomeTeam(e.target.value)}
+                placeholder="e.g. Glenelg" className="input-field" />
+            </div>
+            <div>
+              <label style={labelStyle}>{'Away Team *'}</label>
+              <input type="text" value={awayTeam} onChange={e => setAwayTeam(e.target.value)}
+                placeholder="e.g. Sturt" className="input-field" />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={labelStyle}>{'Home Score *'}</label>
+              <input type="text" value={homeScore} onChange={e => setHomeScore(e.target.value)}
+                placeholder="e.g. 12.8 (80)" className="input-field" />
+            </div>
+            <div>
+              <label style={labelStyle}>{'Away Score *'}</label>
+              <input type="text" value={awayScore} onChange={e => setAwayScore(e.target.value)}
+                placeholder="e.g. 7.5 (47)" className="input-field" />
+            </div>
+          </div>
+
           <div>
-            <label style={labelStyle}>
-              {'Excerpt * '}
-              <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, textTransform: 'none', fontSize: '0.7rem' }}>({excerpt.length}/300 chars)</span>
-            </label>
-            <textarea value={excerpt} onChange={e => setExcerpt(e.target.value.slice(0, 300))} rows={4} className="input-field" placeholder="Short summary shown on editorial cards..." />
+            <label style={labelStyle}>{'Match Date *'}</label>
+            <input type="datetime-local" value={matchDate} onChange={e => setMatchDate(e.target.value)}
+              className="input-field" />
           </div>
-          <div>
-            <label style={labelStyle}>{'Author'}</label>
-            <select value={author} onChange={e => setAuthor(e.target.value)} className="input-field">
-              {AUTHORS.map(a => <option key={a}>{a}</option>)}
-            </select>
-          </div>
+
         </div>
 
+        {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={labelStyle}>{'Venue'}</label>
+              <input type="text" value={venue} onChange={e => setVenue(e.target.value)}
+                placeholder="e.g. Gliderol Stadium" className="input-field" />
+            </div>
+            <div>
+              <label style={labelStyle}>{'Round'}</label>
+              <input type="text" value={round} onChange={e => setRound(e.target.value)}
+                placeholder="e.g. Round 3" className="input-field" />
+            </div>
+          </div>
+
           <div>
             <label style={labelStyle}>{'Competition *'}</label>
             <select value={competition} onChange={e => setCompetition(e.target.value)} className="input-field">
@@ -171,6 +214,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
             <div>
               <label style={labelStyle}>{'Country League *'}</label>
               <select value={countryLeague} onChange={e => setCountryLeague(e.target.value)} className="input-field">
+                <option value="">— Select league —</option>
                 {Object.entries(COUNTRY_LEAGUES).map(([name, val]) => (
                   <option key={val} value={val}>{name}</option>
                 ))}
@@ -178,17 +222,31 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
             </div>
           )}
 
-          {!ready && <div className="alert-warning">{'Fill in Title, Slug and Excerpt to publish.'}</div>}
-          {error  && <div className="alert-error">{error}</div>}
+          <div>
+            <label style={labelStyle}>{'Author'}</label>
+            <select value={author} onChange={e => setAuthor(e.target.value)} className="input-field">
+              {AUTHORS.map(a => <option key={a}>{a}</option>)}
+            </select>
+          </div>
+
+          {!ready && (
+            <div className="alert-warning">
+              {'Fill in Title, Slug, both teams, scores and match date to publish.'}
+            </div>
+          )}
+          {error && <div className="alert-error">{error}</div>}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
-            <button onClick={() => publish(false)} disabled={!ready || loading} className="btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
+            <button onClick={() => publish(false)} disabled={!ready || loading}
+              className="btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
               {loading ? 'Publishing...' : 'Publish Live Now'}
             </button>
-            <button onClick={() => publish(true)} disabled={!title || loading} className="btn-yellow" style={{ width: '100%', padding: '0.9rem' }}>
+            <button onClick={() => publish(true)} disabled={!title || loading}
+              className="btn-yellow" style={{ width: '100%', padding: '0.9rem' }}>
               {'Save as Draft'}
             </button>
           </div>
+
         </div>
       </div>
     </section>
