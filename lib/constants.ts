@@ -123,8 +123,7 @@ ADDITIONAL SOCIAL MEDIA RULES:
 - No markdown formatting at all.
 
 SOCIAL MEDIA POST STRUCTURE:
-1. ATTENTION-GRABBING OPENING — start with a strong emoji and punchy sentence
-2. THE STORY (quarter by quarter) — use ⚡ Q1, ⚡ Q2 etc. Base ONLY on score data.
+1. ATTENTION-GRABBING OPENING — start with a strong emoji, then on the next line state: [Home Team] vs [Away Team] at [Venue] on [Date]. Follow with a punchy one-line summary of the result.2. THE STORY (quarter by quarter) — use ⚡ Q1, ⚡ Q2 etc. Base ONLY on score data.
 3. THE HEROES — ONLY include this section if best players are explicitly listed for BOTH teams. If either team is missing best players, skip this section entirely.
 4. BY THE NUMBERS — use 📊 and bullet points with emojis
 5. CLOSING HOOK + hashtags using actual competition/league name from context
