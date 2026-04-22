@@ -40,23 +40,22 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const cleanTitle = (plain.split('\n').map(l => l.trim()).find(l => l.length > 5) ?? '')
     .replace(/^#+\s*/, '').replace(/\*+/g, '').slice(0, 120)
 
-  const [title, setTitle]               = useState(cleanTitle)
-  const [slug, setSlug]                 = useState(slugify(cleanTitle))
-  const [author, setAuthor]             = useState(AUTHORS[0])
-  const [competition, setCompetition]   = useState('AFL')
+  const [title, setTitle]                 = useState(cleanTitle)
+  const [slug, setSlug]                   = useState(slugify(cleanTitle))
+  const [author, setAuthor]               = useState(AUTHORS[0])
+  const [competition, setCompetition]     = useState('AFL')
   const [countryLeague, setCountryLeague] = useState('')
 
-  // Match result fields
-  const [homeTeam, setHomeTeam]         = useState('')
-  const [awayTeam, setAwayTeam]         = useState('')
-  const [homeScore, setHomeScore]       = useState('')
-  const [awayScore, setAwayScore]       = useState('')
-  const [matchDate, setMatchDate]       = useState('')
-  const [venue, setVenue]               = useState('')
-  const [round, setRound]               = useState('')
+  const [homeTeam, setHomeTeam]   = useState('')
+  const [awayTeam, setAwayTeam]   = useState('')
+  const [homeScore, setHomeScore] = useState('')
+  const [awayScore, setAwayScore] = useState('')
+  const [matchDate, setMatchDate] = useState('')
+  const [venue, setVenue]         = useState('')
+  const [round, setRound]         = useState('')
 
-  const [loading, setLoading]           = useState(false)
-  const [error, setError]               = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
 
   useEffect(() => {
     if (!meta) return
@@ -71,7 +70,11 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
   useEffect(() => { setSlug(slugify(title)) }, [title])
 
-  const ready = Boolean(title && slug && homeTeam && awayTeam && homeScore && awayScore && matchDate)
+  // For Country Football, also require countryLeague
+  const ready = Boolean(
+    title && slug && homeTeam && awayTeam && homeScore && awayScore && matchDate &&
+    (competition !== 'Country Football' || countryLeague)
+  )
 
   async function publish(asDraft: boolean) {
     setLoading(true); setError('')
@@ -105,6 +108,12 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     }
   }
 
+  // Show correct live URL depending on competition
+  const baseUrl = 'https://www.safootballer.com.au'
+  const liveUrl = competition === 'Country Football' && countryLeague
+    ? `${baseUrl}/country-football?league=${countryLeague}`
+    : `${baseUrl}/match-results/${publishedSlug}`
+
   const labelStyle = {
     fontSize: '0.75rem' as const,
     fontWeight: 700,
@@ -115,8 +124,6 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     display: 'block' as const,
   }
 
-  const liveUrl = 'https://sa-footballer-website.vercel.app/match-results/' + publishedSlug
-
   return (
     <section className="fade-up">
       <SectionHeading step={4} title="Publish to Website" />
@@ -125,7 +132,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
         <div className="alert-success" style={{ marginBottom: '1.25rem' }}>
           {'Match report is LIVE! '}
           <a href={liveUrl} target="_blank" rel="noreferrer" style={{ color: '#4ade80', textDecoration: 'underline' }}>
-            {'View match report'}
+            {competition === 'Country Football' ? 'View on Country Football page' : 'View match report'}
           </a>
         </div>
       )}
@@ -133,7 +140,9 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       <div className="alert-info" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #e6fe00' }}>
         {'Fill in the match details below and hit '}
         <strong style={{ color: '#e6fe00' }}>{'Publish Live'}</strong>
-        {' — appears on the website immediately.'}
+        {competition === 'Country Football'
+          ? ' — appears on the Country Football page immediately.'
+          : ' — appears on the Match Results page immediately.'}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
@@ -231,7 +240,9 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
           {!ready && (
             <div className="alert-warning">
-              {'Fill in Title, Slug, both teams, scores and match date to publish.'}
+              {competition === 'Country Football'
+                ? 'Fill in all fields including Country League to publish.'
+                : 'Fill in Title, Slug, both teams, scores and match date to publish.'}
             </div>
           )}
           {error && <div className="alert-error">{error}</div>}
@@ -239,7 +250,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
             <button onClick={() => publish(false)} disabled={!ready || loading}
               className="btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
-              {loading ? 'Publishing...' : 'Publish Live Now'}
+              {loading ? 'Publishing...' : competition === 'Country Football' ? 'Publish to Country Football Page' : 'Publish Live Now'}
             </button>
             <button onClick={() => publish(true)} disabled={!title || loading}
               className="btn-yellow" style={{ width: '100%', padding: '0.9rem' }}>
