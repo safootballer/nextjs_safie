@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
   }
 
   const {
-    title, slug, competition, contentText, author, countryLeague,
+    title, slug, competition, contentText, author,
+    countryLeague, amateurGrade,
     homeTeam, awayTeam, homeScore, awayScore, matchDate, venue, round,
     asDraft,
   } = body
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
     contentText,
     author: author ?? 'SA Footballer',
     countryLeague,
+    amateurGrade,
     homeTeam,
     awayTeam,
     homeScore,

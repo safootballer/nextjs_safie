@@ -102,7 +102,8 @@ function htmlToPortableText(html: string) {
 }
 
 export async function publishToSanity({
-  title, slug, competition, contentText, author, countryLeague,
+  title, slug, competition, contentText, author,
+  countryLeague, amateurGrade,
   homeTeam, awayTeam, homeScore, awayScore, matchDate, venue, round,
   asDraft = false,
 }: {
@@ -112,6 +113,7 @@ export async function publishToSanity({
   contentText: string
   author: string
   countryLeague?: string | null
+  amateurGrade?: string | null
   homeTeam: string
   awayTeam: string
   homeScore: string
@@ -151,6 +153,10 @@ export async function publishToSanity({
 
   if (competition === 'Country Football' && countryLeague) {
     doc.countryLeague = countryLeague
+  }
+
+  if (competition === 'Amateur' && amateurGrade) {
+    doc.amateurGrade = amateurGrade
   }
 
   const payload = { mutations: [{ createOrReplace: doc }] }

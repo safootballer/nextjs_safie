@@ -6,6 +6,57 @@ import { AUTHORS, COMPETITION_MAP, COUNTRY_LEAGUES } from '@/lib/constants'
 
 const COMPETITION_OPTIONS = ['AFL', 'AFLW', 'SANFL', 'SANFLW', 'Amateur', "SAWFL Women's", 'Country Football']
 
+const AMATEUR_GRADES: Record<string, string> = {
+  'Division 1':           'division-1',
+  'Division 2':           'division-2',
+  'Division 3':           'division-3',
+  'Division 4':           'division-4',
+  'Division 5':           'division-5',
+  'Division 6':           'division-6',
+  'Division 7':           'division-7',
+  'Division 1 Reserves':  'division-1-reserves',
+  'Division 2 Reserves':  'division-2-reserves',
+  'Division 3 Reserves':  'division-3-reserves',
+  'Division 4 Reserves':  'division-4-reserves',
+  'Division 5 Reserves':  'division-5-reserves',
+  'Division 6 Reserves':  'division-6-reserves',
+  'Division 7 Reserves':  'division-7-reserves',
+  'Division C1':          'division-c1',
+  'Division C2':          'division-c2',
+  'Division C3':          'division-c3',
+  'Division C4':          'division-c4',
+  'Division C5':          'division-c5',
+  'Division C6':          'division-c6',
+  'Division C7':          'division-c7',
+  'Division C8':          'division-c8',
+}
+
+// Map PlayHQ grade IDs to amateurGrade values
+const PLAYHQ_GRADE_TO_AMATEUR: Record<string, string> = {
+  '8eecd4b0': 'division-1',
+  '85247b82': 'division-2',
+  '372b55e9': 'division-3',
+  '22794d03': 'division-4',
+  '372d8776': 'division-5',
+  '961ce426': 'division-6',
+  '43b5cc78': 'division-7',
+  '1f82c881': 'division-1-reserves',
+  '8ebba3c8': 'division-2-reserves',
+  'b9156c34': 'division-3-reserves',
+  '692c9b17': 'division-4-reserves',
+  'cedbc98d': 'division-5-reserves',
+  '3beb6a9e': 'division-6-reserves',
+  '1991ba25': 'division-7-reserves',
+  'd7fe9dd5': 'division-c1',
+  'aea638ff': 'division-c2',
+  '256a623b': 'division-c3',
+  '1bd8ff22': 'division-c4',
+  '792996a6': 'division-c5',
+  'a645b2ca': 'division-c6',
+  '69f075a6': 'division-c7',
+  'a374a910': 'division-c8',
+}
+
 interface Meta {
   competition: string
   detectedCountryLeague: string | null
@@ -16,6 +67,7 @@ interface Meta {
   awayScore: number
   date: string
   venue: string
+  gradeId?: string
 }
 interface Props {
   content: string
@@ -41,11 +93,8 @@ function stripHtml(html: string): string {
     .trim()
 }
 
-// Convert PlayHQ score number to goals.behinds format
-// e.g. 80 → find closest: 80 = 11*6 + 14 = 80? just show as plain number
 function formatScore(score: number): string {
   if (!score && score !== 0) return ''
-  // Try to express as goals.behinds (goals*6 + behinds = score)
   for (let g = Math.floor(score / 6); g >= 0; g--) {
     const b = score - g * 6
     if (b >= 0 && b < 20) return `${g}.${b} (${score})`
@@ -63,8 +112,8 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const [author, setAuthor]               = useState(AUTHORS[0])
   const [competition, setCompetition]     = useState('AFL')
   const [countryLeague, setCountryLeague] = useState('')
+  const [amateurGrade, setAmateurGrade]   = useState('')
 
-  // Match result fields — pre-filled from meta
   const [homeTeam, setHomeTeam]   = useState('')
   const [awayTeam, setAwayTeam]   = useState('')
   const [homeScore, setHomeScore] = useState('')
@@ -76,22 +125,15 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
 
-  // Pre-fill from meta when it arrives
   useEffect(() => {
     if (!meta) return
 
-    // Teams
     if (meta.homeTeam) setHomeTeam(meta.homeTeam)
     if (meta.awayTeam) setAwayTeam(meta.awayTeam)
-
-    // Scores
     if (meta.homeScore) setHomeScore(formatScore(meta.homeScore))
     if (meta.awayScore) setAwayScore(formatScore(meta.awayScore))
-
-    // Venue
     if (meta.venue) setVenue(meta.venue)
 
-    // Date — convert to datetime-local format (YYYY-MM-DDTHH:MM)
     if (meta.date) {
       try {
         const d = new Date(meta.date)
@@ -102,13 +144,18 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       } catch { /* ignore */ }
     }
 
-    // Competition
     if (meta.isCountryFootball) {
       setCompetition('Country Football')
       setCountryLeague(meta.detectedCountryLeague ?? '')
     } else {
       const m = COMPETITION_MAP[meta.competition] ?? 'AFL'
-      setCompetition(COMPETITION_OPTIONS.includes(m) ? m : 'AFL')
+      const comp = COMPETITION_OPTIONS.includes(m) ? m : 'AFL'
+      setCompetition(comp)
+
+      // Auto-detect amateur grade from gradeId
+      if (comp === 'Amateur' && meta.gradeId && PLAYHQ_GRADE_TO_AMATEUR[meta.gradeId]) {
+        setAmateurGrade(PLAYHQ_GRADE_TO_AMATEUR[meta.gradeId])
+      }
     }
   }, [meta])
 
@@ -116,7 +163,8 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
   const ready = Boolean(
     title && slug && homeTeam && awayTeam && homeScore && awayScore && matchDate &&
-    (competition !== 'Country Football' || countryLeague)
+    (competition !== 'Country Football' || countryLeague) &&
+    (competition !== 'Amateur' || amateurGrade)
   )
 
   async function publish(asDraft: boolean) {
@@ -128,6 +176,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
         title, slug, competition,
         contentText: content, author,
         countryLeague: competition === 'Country Football' ? countryLeague : null,
+        amateurGrade: competition === 'Amateur' ? amateurGrade : null,
         homeTeam, awayTeam, homeScore, awayScore,
         matchDate, venue, round, asDraft,
       }),
@@ -155,6 +204,12 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     letterSpacing: '0.08em',
     marginBottom: '0.4rem',
     display: 'block' as const,
+  }
+
+  const publishBtnLabel = () => {
+    if (loading) return 'Publishing...'
+    if (competition === 'Country Football') return 'Publish to Country Football Page'
+    return 'Publish Live Now'
   }
 
   return (
@@ -247,10 +302,22 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
           <div>
             <label style={labelStyle}>{'Competition *'}</label>
-            <select value={competition} onChange={e => setCompetition(e.target.value)} className="input-field">
+            <select value={competition} onChange={e => { setCompetition(e.target.value); setAmateurGrade(''); setCountryLeague('') }} className="input-field">
               {COMPETITION_OPTIONS.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
+
+          {competition === 'Amateur' && (
+            <div>
+              <label style={labelStyle}>{'Amateur Grade *'}</label>
+              <select value={amateurGrade} onChange={e => setAmateurGrade(e.target.value)} className="input-field">
+                <option value="">— Select grade —</option>
+                {Object.entries(AMATEUR_GRADES).map(([name, val]) => (
+                  <option key={val} value={val}>{name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {competition === 'Country Football' && (
             <div>
@@ -275,6 +342,8 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
             <div className="alert-warning">
               {competition === 'Country Football'
                 ? 'Fill in all fields including Country League to publish.'
+                : competition === 'Amateur'
+                ? 'Fill in all fields including Amateur Grade to publish.'
                 : 'Fill in Title, Slug, both teams, scores and match date to publish.'}
             </div>
           )}
@@ -283,7 +352,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
             <button onClick={() => publish(false)} disabled={!ready || loading}
               className="btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
-              {loading ? 'Publishing...' : competition === 'Country Football' ? 'Publish to Country Football Page' : 'Publish Live Now'}
+              {publishBtnLabel()}
             </button>
             <button onClick={() => publish(true)} disabled={!title || loading}
               className="btn-yellow" style={{ width: '100%', padding: '0.9rem' }}>
