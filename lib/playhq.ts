@@ -49,6 +49,19 @@ query gameView($gameId: ID!) {
 }
 `
 
+// ── Strip grade suffixes from team names ───────────────────────────────────────
+// Removes: - M1, - M1R, - W1, - W1R, - C1, - A Grade, - B Grade etc
+export function cleanTeamName(name: string): string {
+  return name
+    .replace(/\s*-\s*M\d+R?\s*$/i, '')   // - M1, - M2R etc
+    .replace(/\s*-\s*W\d+R?\s*$/i, '')   // - W1, - W2R etc
+    .replace(/\s*-\s*C\d+\s*$/i, '')     // - C1, - C2 etc
+    .replace(/\s*-\s*[A-Z]\s+Grade\s*$/i, '') // - A Grade, - B Grade etc
+    .replace(/\s*-\s*Under\s*\d+\s*$/i, '')   // - Under 16, - Under 18
+    .replace(/\s*-\s*U\d+\s*$/i, '')     // - U16, - U18
+    .trim()
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractPeriodScores(periods: any[]): Record<string, string> {
   const quarterMap: Record<string, string> = {
@@ -63,7 +76,7 @@ function extractPeriodScores(periods: any[]): Record<string, string> {
     if (!q) continue
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const s of p.statistics as any[]) {
-      if (s.type.value === 'TOTAL_SCORE')   scores[q]  = s.count
+      if (s.type.value === 'TOTAL_SCORE')        scores[q]  = s.count
       else if (s.type.value === '6_POINT_SCORE') goals[q]   = s.count
       else if (s.type.value === '1_POINT_SCORE') behinds[q] = s.count
     }
@@ -177,7 +190,16 @@ export async function fetchMatchFromPlayHQ(matchId: string): Promise<MatchData> 
 }
 
 export function buildMatchKnowledge(match: MatchData): string {
-  const { home_team: home, away_team: away, final_score, period_scores, lineups, goal_scorers, best_players, competition, date, venue } = match
+  const {
+    home_team: rawHome, away_team: rawAway,
+    final_score, period_scores, lineups,
+    goal_scorers, best_players, competition, date, venue,
+  } = match
+
+  // Clean team names — remove grade suffixes for AI report
+  const home = cleanTeamName(rawHome)
+  const away = cleanTeamName(rawAway)
+
   const margin      = Math.abs(final_score.home - final_score.away)
   const hq          = period_scores.home
   const aq          = period_scores.away
