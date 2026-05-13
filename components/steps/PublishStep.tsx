@@ -6,6 +6,12 @@ import { AUTHORS, COMPETITION_MAP, COUNTRY_LEAGUES } from '@/lib/constants'
 
 const COMPETITION_OPTIONS = ['AFL', 'AFLW', 'SANFL', 'SANFLW', 'Amateur', "SAWFL Women's", 'Country Football']
 
+const SANFL_GRADES: Record<string, string> = {
+  'League':   'league',
+  'Under 18': 'under-18',
+  'Under 16': 'under-16',
+}
+
 const AMATEUR_GRADES: Record<string, string> = {
   'Division 1':           'division-1',
   'Division 2':           'division-2',
@@ -89,6 +95,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const [competition, setCompetition]     = useState('AFL')
   const [countryLeague, setCountryLeague] = useState('')
   const [amateurGrade, setAmateurGrade]   = useState('')
+  const [sanflGrade, setSanflGrade]       = useState('')
 
   const [homeTeam, setHomeTeam]   = useState('')
   const [awayTeam, setAwayTeam]   = useState('')
@@ -132,6 +139,9 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       if (comp === 'Amateur' && meta.amateurGrade) {
         setAmateurGrade(meta.amateurGrade)
       }
+      if (comp === 'SANFL' && meta.sanflGrade) {
+        setSanflGrade(meta.sanflGrade)
+      }
     }
   }, [meta])
 
@@ -140,7 +150,8 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const ready = Boolean(
     title && slug && homeTeam && awayTeam && homeScore && awayScore && matchDate &&
     (competition !== 'Country Football' || countryLeague) &&
-    (competition !== 'Amateur' || amateurGrade)
+    (competition !== 'Amateur' || amateurGrade) &&
+    (competition !== 'SANFL' || sanflGrade)
   )
 
   async function publish(asDraft: boolean) {
@@ -153,6 +164,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
         contentText: content, author,
         countryLeague: competition === 'Country Football' ? countryLeague : null,
         amateurGrade:  competition === 'Amateur' ? amateurGrade : null,
+        sanflGrade:    competition === 'SANFL' ? sanflGrade : null,
         homeTeam, awayTeam, homeScore, awayScore,
         matchDate, venue, round, asDraft,
       }),
@@ -275,10 +287,29 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
           <div>
             <label style={labelStyle}>{'Competition *'}</label>
-            <select value={competition} onChange={e => { setCompetition(e.target.value); setAmateurGrade(''); setCountryLeague('') }} className="input-field">
+            <select value={competition} onChange={e => { setCompetition(e.target.value); setAmateurGrade(''); setCountryLeague(''); setSanflGrade('') }} className="input-field">
               {COMPETITION_OPTIONS.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
+
+          {competition === 'SANFL' && (
+            <div>
+              <label style={labelStyle}>
+                {'SANFL Grade *'}
+                {meta?.sanflGrade && (
+                  <span style={{ color: '#4ade80', marginLeft: '0.5rem', textTransform: 'none', fontSize: '0.7rem' }}>
+                    ✅ Auto-detected
+                  </span>
+                )}
+              </label>
+              <select value={sanflGrade} onChange={e => setSanflGrade(e.target.value)} className="input-field">
+                <option value="">— Select grade —</option>
+                {Object.entries(SANFL_GRADES).map(([name, val]) => (
+                  <option key={val} value={val}>{name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {competition === 'Amateur' && (
             <div>
@@ -324,6 +355,8 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
                 ? 'Fill in all fields including Country League to publish.'
                 : competition === 'Amateur'
                 ? 'Fill in all fields including Amateur Grade to publish.'
+                : competition === 'SANFL'
+                ? 'Fill in all fields including SANFL Grade to publish.'
                 : 'Fill in Title, Slug, both teams, scores and match date to publish.'}
             </div>
           )}
