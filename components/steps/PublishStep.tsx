@@ -12,6 +12,17 @@ const SANFL_GRADES: Record<string, string> = {
   'Under 16': 'under-16',
 }
 
+const SAWFL_GRADES: Record<string, string> = {
+  'Division 1':          'division-1',
+  'Division 2':          'division-2',
+  'Division 3':          'division-3',
+  'Division 4':          'division-4',
+  'Division 5':          'division-5',
+  'Division 6':          'division-6',
+  'Division 1 Reserves': 'division-1-reserves',
+  'Division 2 Reserves': 'division-2-reserves',
+}
+
 const AMATEUR_GRADES: Record<string, string> = {
   'Division 1':           'division-1',
   'Division 2':           'division-2',
@@ -95,6 +106,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const [competition, setCompetition]     = useState('AFL')
   const [countryLeague, setCountryLeague] = useState('')
   const [amateurGrade, setAmateurGrade]   = useState('')
+  const [sawflGrade, setSawflGrade]       = useState('')
   const [sanflGrade, setSanflGrade]       = useState('')
 
   const [homeTeam, setHomeTeam]   = useState('')
@@ -131,17 +143,12 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       setCompetition('Country Football')
       setCountryLeague(meta.detectedCountryLeague ?? '')
     } else {
-      // Use detected competition from match link (already mapped correctly)
       const comp = COMPETITION_OPTIONS.includes(meta.competition) ? meta.competition : 'AFL'
       setCompetition(comp)
 
-      // Auto-fill amateur grade from match link detection
-      if (comp === 'Amateur' && meta.amateurGrade) {
-        setAmateurGrade(meta.amateurGrade)
-      }
-      if (comp === 'SANFL' && meta.sanflGrade) {
-        setSanflGrade(meta.sanflGrade)
-      }
+      if (comp === 'Amateur' && meta.amateurGrade) setAmateurGrade(meta.amateurGrade)
+      if (comp === "SAWFL Women's" && meta.amateurGrade) setSawflGrade(meta.amateurGrade)
+      if (comp === 'SANFL' && meta.sanflGrade) setSanflGrade(meta.sanflGrade)
     }
   }, [meta])
 
@@ -151,6 +158,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     title && slug && homeTeam && awayTeam && homeScore && awayScore && matchDate &&
     (competition !== 'Country Football' || countryLeague) &&
     (competition !== 'Amateur' || amateurGrade) &&
+    (competition !== "SAWFL Women's" || sawflGrade) &&
     (competition !== 'SANFL' || sanflGrade)
   )
 
@@ -163,7 +171,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
         title, slug, competition,
         contentText: content, author,
         countryLeague: competition === 'Country Football' ? countryLeague : null,
-        amateurGrade:  competition === 'Amateur' ? amateurGrade : null,
+        amateurGrade:  competition === 'Amateur' ? amateurGrade : competition === "SAWFL Women's" ? sawflGrade : null,
         sanflGrade:    competition === 'SANFL' ? sanflGrade : null,
         homeTeam, awayTeam, homeScore, awayScore,
         matchDate, venue, round, asDraft,
@@ -287,7 +295,10 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
           <div>
             <label style={labelStyle}>{'Competition *'}</label>
-            <select value={competition} onChange={e => { setCompetition(e.target.value); setAmateurGrade(''); setCountryLeague(''); setSanflGrade('') }} className="input-field">
+            <select value={competition} onChange={e => {
+              setCompetition(e.target.value)
+              setAmateurGrade(''); setSawflGrade(''); setCountryLeague(''); setSanflGrade('')
+            }} className="input-field">
               {COMPETITION_OPTIONS.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
@@ -297,9 +308,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
               <label style={labelStyle}>
                 {'SANFL Grade *'}
                 {meta?.sanflGrade && (
-                  <span style={{ color: '#4ade80', marginLeft: '0.5rem', textTransform: 'none', fontSize: '0.7rem' }}>
-                    ✅ Auto-detected
-                  </span>
+                  <span style={{ color: '#4ade80', marginLeft: '0.5rem', textTransform: 'none', fontSize: '0.7rem' }}>✅ Auto-detected</span>
                 )}
               </label>
               <select value={sanflGrade} onChange={e => setSanflGrade(e.target.value)} className="input-field">
@@ -316,14 +325,29 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
               <label style={labelStyle}>
                 {'Amateur Grade *'}
                 {meta?.amateurGrade && (
-                  <span style={{ color: '#4ade80', marginLeft: '0.5rem', textTransform: 'none', fontSize: '0.7rem' }}>
-                    ✅ Auto-detected
-                  </span>
+                  <span style={{ color: '#4ade80', marginLeft: '0.5rem', textTransform: 'none', fontSize: '0.7rem' }}>✅ Auto-detected</span>
                 )}
               </label>
               <select value={amateurGrade} onChange={e => setAmateurGrade(e.target.value)} className="input-field">
                 <option value="">— Select grade —</option>
                 {Object.entries(AMATEUR_GRADES).map(([name, val]) => (
+                  <option key={val} value={val}>{name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {competition === "SAWFL Women's" && (
+            <div>
+              <label style={labelStyle}>
+                {"SAWFL Women's Grade *"}
+                {meta?.amateurGrade && (
+                  <span style={{ color: '#4ade80', marginLeft: '0.5rem', textTransform: 'none', fontSize: '0.7rem' }}>✅ Auto-detected</span>
+                )}
+              </label>
+              <select value={sawflGrade} onChange={e => setSawflGrade(e.target.value)} className="input-field">
+                <option value="">— Select grade —</option>
+                {Object.entries(SAWFL_GRADES).map(([name, val]) => (
                   <option key={val} value={val}>{name}</option>
                 ))}
               </select>
@@ -355,6 +379,8 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
                 ? 'Fill in all fields including Country League to publish.'
                 : competition === 'Amateur'
                 ? 'Fill in all fields including Amateur Grade to publish.'
+                : competition === "SAWFL Women's"
+                ? "Fill in all fields including SAWFL Women's Grade to publish."
                 : competition === 'SANFL'
                 ? 'Fill in all fields including SANFL Grade to publish.'
                 : 'Fill in Title, Slug, both teams, scores and match date to publish.'}
