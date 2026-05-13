@@ -7,15 +7,33 @@ import { MatchSelectStep } from '@/components/steps/MatchSelectStep'
 import { PublishStep }     from '@/components/steps/PublishStep'
 
 export type MatchLink = {
-  id: number; match_id: string; home_team: string | null; away_team: string | null
-  competition: string | null; date: string | null; venue: string | null
+  id: number
+  match_id: string
+  home_team: string | null
+  away_team: string | null
+  competition: string | null
+  date: string | null
+  venue: string | null
+  amateur_grade: string | null
+  sanfl_grade: string | null
 }
+
 export type KBResult = {
-  matchId: string; knowledge: string
+  matchId: string
+  knowledge: string
   meta: {
-    homeTeam: string; awayTeam: string; date: string; venue: string
-    competition: string; homeScore: number; awayScore: number
-    margin: number; detectedCountryLeague: string | null; isCountryFootball: boolean
+    homeTeam: string
+    awayTeam: string
+    date: string
+    venue: string
+    competition: string
+    homeScore: number
+    awayScore: number
+    margin: number
+    detectedCountryLeague: string | null
+    isCountryFootball: boolean
+    amateurGrade: string | null
+    sanflGrade: string | null
   }
 }
 
@@ -75,7 +93,6 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
-
         <MatchSelectStep
           grouped={grouped}
           matches={matches}

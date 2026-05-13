@@ -9,32 +9,32 @@ datasource db {
 }
 
 model Match {
-  id              Int      @id @default(autoincrement())
-  match_id        String   @unique @db.VarChar(255)
-  extracted_at    String?  @db.VarChar(255)
-  date            String?  @db.VarChar(255)
-  competition     String?  @db.VarChar(255)
-  venue           String?  @db.VarChar(255)
-  home_team       String?  @db.VarChar(255)
-  away_team       String?  @db.VarChar(255)
+  id               Int     @id @default(autoincrement())
+  match_id         String  @unique @db.VarChar(255)
+  extracted_at     String? @db.VarChar(255)
+  date             String? @db.VarChar(255)
+  competition      String? @db.VarChar(255)
+  venue            String? @db.VarChar(255)
+  home_team        String? @db.VarChar(255)
+  away_team        String? @db.VarChar(255)
   home_final_score Int?
   away_final_score Int?
-  margin          Int?
-  quarter_scores  String?  @db.Text
-  lineups         String?  @db.Text
-  goal_scorers    String?  @db.Text
-  best_players    String?  @db.Text
+  margin           Int?
+  quarter_scores   String? @db.Text
+  lineups          String? @db.Text
+  goal_scorers     String? @db.Text
+  best_players     String? @db.Text
 
   @@map("matches")
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  username      String   @unique @db.VarChar(255)
-  password_hash String   @db.VarChar(255)
-  role          String   @db.VarChar(50)
-  created_at    String?  @db.VarChar(255)
-  last_login    String?  @db.VarChar(255)
+  id            Int     @id @default(autoincrement())
+  username      String  @unique @db.VarChar(255)
+  password_hash String  @db.VarChar(255)
+  role          String  @db.VarChar(50)
+  created_at    String? @db.VarChar(255)
+  last_login    String? @db.VarChar(255)
 
   generation_costs GenerationCost[]
 
@@ -59,17 +59,20 @@ model GenerationCost {
 }
 
 model MatchLink {
-  id          Int     @id @default(autoincrement())
-  playhq_url  String? @db.VarChar(500)
-  match_id    String  @unique @db.VarChar(255)
-  home_team   String? @db.VarChar(255)
-  away_team   String? @db.VarChar(255)
-  competition String? @db.VarChar(255)
-  date        String? @db.VarChar(255)
-  venue       String? @db.VarChar(255)
-  added_by    String? @db.VarChar(255)
-  added_at    String? @db.VarChar(255)
-  is_active   Int?    @default(1)
+  id            Int     @id @default(autoincrement())
+  playhq_url    String? @db.VarChar(500)
+  match_id      String  @unique @db.VarChar(255)
+  home_team     String? @db.VarChar(255)
+  away_team     String? @db.VarChar(255)
+  competition   String? @db.VarChar(255)
+  grade_name    String? @db.VarChar(255)
+  amateur_grade String? @db.VarChar(255)
+  sanfl_grade   String? @db.VarChar(255)
+  date          String? @db.VarChar(255)
+  venue         String? @db.VarChar(255)
+  added_by      String? @db.VarChar(255)
+  added_at      String? @db.VarChar(255)
+  is_active     Int?    @default(1)
 
   @@map("match_links")
 }

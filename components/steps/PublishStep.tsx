@@ -31,32 +31,6 @@ const AMATEUR_GRADES: Record<string, string> = {
   'Division C8':          'division-c8',
 }
 
-// Map PlayHQ grade IDs to amateurGrade values
-const PLAYHQ_GRADE_TO_AMATEUR: Record<string, string> = {
-  '8eecd4b0': 'division-1',
-  '85247b82': 'division-2',
-  '372b55e9': 'division-3',
-  '22794d03': 'division-4',
-  '372d8776': 'division-5',
-  '961ce426': 'division-6',
-  '43b5cc78': 'division-7',
-  '1f82c881': 'division-1-reserves',
-  '8ebba3c8': 'division-2-reserves',
-  'b9156c34': 'division-3-reserves',
-  '692c9b17': 'division-4-reserves',
-  'cedbc98d': 'division-5-reserves',
-  '3beb6a9e': 'division-6-reserves',
-  '1991ba25': 'division-7-reserves',
-  'd7fe9dd5': 'division-c1',
-  'aea638ff': 'division-c2',
-  '256a623b': 'division-c3',
-  '1bd8ff22': 'division-c4',
-  '792996a6': 'division-c5',
-  'a645b2ca': 'division-c6',
-  '69f075a6': 'division-c7',
-  'a374a910': 'division-c8',
-}
-
 interface Meta {
   competition: string
   detectedCountryLeague: string | null
@@ -67,8 +41,10 @@ interface Meta {
   awayScore: number
   date: string
   venue: string
-  gradeId?: string
+  amateurGrade?: string | null
+  sanflGrade?: string | null
 }
+
 interface Props {
   content: string
   contentType: string
@@ -148,13 +124,13 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
       setCompetition('Country Football')
       setCountryLeague(meta.detectedCountryLeague ?? '')
     } else {
-      const m = COMPETITION_MAP[meta.competition] ?? 'AFL'
-      const comp = COMPETITION_OPTIONS.includes(m) ? m : 'AFL'
+      // Use detected competition from match link (already mapped correctly)
+      const comp = COMPETITION_OPTIONS.includes(meta.competition) ? meta.competition : 'AFL'
       setCompetition(comp)
 
-      // Auto-detect amateur grade from gradeId
-      if (comp === 'Amateur' && meta.gradeId && PLAYHQ_GRADE_TO_AMATEUR[meta.gradeId]) {
-        setAmateurGrade(PLAYHQ_GRADE_TO_AMATEUR[meta.gradeId])
+      // Auto-fill amateur grade from match link detection
+      if (comp === 'Amateur' && meta.amateurGrade) {
+        setAmateurGrade(meta.amateurGrade)
       }
     }
   }, [meta])
@@ -176,7 +152,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
         title, slug, competition,
         contentText: content, author,
         countryLeague: competition === 'Country Football' ? countryLeague : null,
-        amateurGrade: competition === 'Amateur' ? amateurGrade : null,
+        amateurGrade:  competition === 'Amateur' ? amateurGrade : null,
         homeTeam, awayTeam, homeScore, awayScore,
         matchDate, venue, round, asDraft,
       }),
@@ -237,7 +213,6 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
           <div>
             <label style={labelStyle}>{'Article Title *'}</label>
             <input type="text" value={title} onChange={e => setTitle(e.target.value)}
@@ -281,12 +256,10 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
             <input type="datetime-local" value={matchDate} onChange={e => setMatchDate(e.target.value)}
               className="input-field" />
           </div>
-
         </div>
 
         {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
               <label style={labelStyle}>{'Venue'}</label>
@@ -309,7 +282,14 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
           {competition === 'Amateur' && (
             <div>
-              <label style={labelStyle}>{'Amateur Grade *'}</label>
+              <label style={labelStyle}>
+                {'Amateur Grade *'}
+                {meta?.amateurGrade && (
+                  <span style={{ color: '#4ade80', marginLeft: '0.5rem', textTransform: 'none', fontSize: '0.7rem' }}>
+                    ✅ Auto-detected
+                  </span>
+                )}
+              </label>
               <select value={amateurGrade} onChange={e => setAmateurGrade(e.target.value)} className="input-field">
                 <option value="">— Select grade —</option>
                 {Object.entries(AMATEUR_GRADES).map(([name, val]) => (
@@ -359,7 +339,6 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
               {'Save as Draft'}
             </button>
           </div>
-
         </div>
       </div>
     </section>
