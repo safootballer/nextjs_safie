@@ -53,12 +53,15 @@ query gameView($gameId: ID!) {
 // Removes: - M1, - M1R, - W1, - W1R, - C1, - A Grade, - B Grade etc
 export function cleanTeamName(name: string): string {
   return name
-    .replace(/\s*-\s*M\d+R?\s*$/i, '')   // - M1, - M2R etc
-    .replace(/\s*-\s*W\d+R?\s*$/i, '')   // - W1, - W2R etc
-    .replace(/\s*-\s*C\d+\s*$/i, '')     // - C1, - C2 etc
-    .replace(/\s*-\s*[A-Z]\s+Grade\s*$/i, '') // - A Grade, - B Grade etc
+    .replace(/\s*-\s*M\d+R?\s*$/i, '')        // - M1, - M2R etc
+    .replace(/\s*-\s*W\d+R?\s*$/i, '')        // - W1, - W2R etc
+    .replace(/\s*-\s*C\d+\s*$/i, '')          // - C1, - C2 etc
+    .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '') // - A Grade, A Grade (with or without dash)
     .replace(/\s*-\s*Under\s*\d+\s*$/i, '')   // - Under 16, - Under 18
-    .replace(/\s*-\s*U\d+\s*$/i, '')     // - U16, - U18
+    .replace(/\s*-\s*U\d+\s*$/i, '')          // - U16, - U18
+    .replace(/\s*\bM\d+R?\b\s*$/i, '')        // M1, M2R without dash
+    .replace(/\s*\bW\d+R?\b\s*$/i, '')        // W1, W2R without dash
+    .replace(/\s*\bC\d+\b\s*$/i, '')          // C1, C2 without dash
     .trim()
 }
 
