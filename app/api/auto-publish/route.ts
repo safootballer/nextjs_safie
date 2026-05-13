@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
-import { getPrompt, calculateOpenAICost, slugify, COMPETITION_MAP, PLAYHQ_TO_COUNTRY_LEAGUE, AUTHORS } from '@/lib/constants'
-import { publishToSanity } from '@/lib/publishers'
+import { getPrompt, calculateOpenAICost, COMPETITION_MAP, PLAYHQ_TO_COUNTRY_LEAGUE, AUTHORS } from '@/lib/constants'
+import { publishToSanity, slugify } from '@/lib/publishers'
 
 const openai     = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 const MAX_ATTEMPTS = 7
