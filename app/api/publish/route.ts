@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const {
     title, slug, competition, contentText, author,
-    countryLeague, amateurGrade,
+    countryLeague, amateurGrade, sanflGrade,
     homeTeam, awayTeam, homeScore, awayScore, matchDate, venue, round,
     asDraft,
   } = body
@@ -31,21 +31,15 @@ export async function POST(req: NextRequest) {
   if (!matchDate)   return NextResponse.json({ error: 'Match date is required' }, { status: 400 })
 
   const result = await publishToSanity({
-    title,
-    slug,
+    title, slug,
     competition: competition ?? 'AFL',
     contentText,
     author: author ?? 'SA Footballer',
     countryLeague,
     amateurGrade,
-    homeTeam,
-    awayTeam,
-    homeScore,
-    awayScore,
-    matchDate,
-    venue,
-    round,
-    asDraft,
+    sanflGrade,
+    homeTeam, awayTeam, homeScore, awayScore,
+    matchDate, venue, round, asDraft,
   })
 
   if (result.success) {

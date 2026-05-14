@@ -33,7 +33,6 @@ function htmlToPortableText(html: string) {
       h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', p: 'normal',
     }
     const style = styleMap[tag] ?? 'normal'
-
     const parts = inner.split(/<br\s*\/?>/gi)
 
     for (const part of parts) {
@@ -50,8 +49,7 @@ function htmlToPortableText(html: string) {
             children.push({
               _type: 'span',
               _key: uuidv4().replace(/-/g, '').slice(0, 12),
-              text,
-              marks: [],
+              text, marks: [],
             })
           }
         } else {
@@ -68,8 +66,7 @@ function htmlToPortableText(html: string) {
             children.push({
               _type: 'span',
               _key: uuidv4().replace(/-/g, '').slice(0, 12),
-              text,
-              marks: [mark],
+              text, marks: [mark],
             })
           }
         }
@@ -79,9 +76,7 @@ function htmlToPortableText(html: string) {
         blocks.push({
           _type: 'block',
           _key: uuidv4().replace(/-/g, '').slice(0, 12),
-          style,
-          markDefs: [],
-          children,
+          style, markDefs: [], children,
         })
       }
     }
@@ -103,7 +98,7 @@ function htmlToPortableText(html: string) {
 
 export async function publishToSanity({
   title, slug, competition, contentText, author,
-  countryLeague, amateurGrade,
+  countryLeague, amateurGrade, sanflGrade,
   homeTeam, awayTeam, homeScore, awayScore, matchDate, venue, round,
   asDraft = false,
 }: {
@@ -114,6 +109,7 @@ export async function publishToSanity({
   author: string
   countryLeague?: string | null
   amateurGrade?: string | null
+  sanflGrade?: string | null
   homeTeam: string
   awayTeam: string
   homeScore: string
@@ -135,28 +131,35 @@ export async function publishToSanity({
   const url   = `https://${projectId}.api.sanity.io/v2024-01-01/data/mutate/${dataset}`
 
   const doc: Record<string, unknown> = {
-    _id:         docId,
-    _type:       'matchResult',
+    _id:       docId,
+    _type:     'matchResult',
     title,
-    slug:        { _type: 'slug', current: slug },
+    slug:      { _type: 'slug', current: slug },
     competition,
     homeTeam,
     awayTeam,
     homeScore,
     awayScore,
-    matchDate:   new Date(matchDate).toISOString(),
-    venue:       venue ?? '',
-    round:       round ?? '',
-    content:     htmlToPortableText(contentText),
+    matchDate: new Date(matchDate).toISOString(),
+    venue:     venue ?? '',
+    round:     round ?? '',
+    content:   htmlToPortableText(contentText),
     author,
   }
 
+  // Save country league
   if (competition === 'Country Football' && countryLeague) {
     doc.countryLeague = countryLeague
   }
 
-  if (competition === 'Amateur' && amateurGrade) {
+  // Save amateur grade (Amateur + SAWFL Women's both use amateurGrade field)
+  if ((competition === 'Amateur' || competition === "SAWFL Women's") && amateurGrade) {
     doc.amateurGrade = amateurGrade
+  }
+
+  // Save SANFL grade
+  if (competition === 'SANFL' && sanflGrade) {
+    doc.sanflGrade = sanflGrade
   }
 
   const payload = { mutations: [{ createOrReplace: doc }] }
