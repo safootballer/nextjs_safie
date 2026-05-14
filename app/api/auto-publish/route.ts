@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
-import { getPrompt, calculateOpenAICost, COMPETITION_MAP, PLAYHQ_TO_COUNTRY_LEAGUE, AUTHORS } from '@/lib/constants'
+import { getPrompt, calculateOpenAICost, AUTHORS } from '@/lib/constants'
 import { publishToSanity, slugify } from '@/lib/publishers'
 
 const openai     = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -55,12 +55,40 @@ function buildContext(match: any, link: any): string {
 
   const margin = Math.abs((match.home_final_score ?? 0) - (match.away_final_score ?? 0))
 
-  let ctx = `Competition: ${link?.competition ?? 'Unknown'}
-Home Team: ${match.home_team}
-Away Team: ${match.away_team}
+  // Clean team names — remove grade suffixes
+  const cleanName = (name: string) => name
+    .replace(/\s*-\s*M\d+R?\s*$/i, '')
+    .replace(/\s*-\s*W\d+R?\s*$/i, '')
+    .replace(/\s*-\s*C\d+\s*$/i, '')
+    .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
+    .replace(/\s*-\s*Under\s*\d+\s*$/i, '')
+    .replace(/\s*\bM\d+R?\b\s*$/i, '')
+    .replace(/\s*\bW\d+R?\b\s*$/i, '')
+    .replace(/\s*\bC\d+\b\s*$/i, '')
+    .trim()
+
+  const home = cleanName(match.home_team ?? '')
+  const away = cleanName(match.away_team ?? '')
+
+  // Build correct competition label
+  let competitionLabel = link?.competition ?? match.competition ?? 'Unknown'
+  if (competitionLabel === 'Amateur') competitionLabel = 'Adelaide Footy League'
+  if (competitionLabel === "SAWFL Women's") competitionLabel = "SA Women's Football League"
+  if (competitionLabel === 'SANFL') {
+    if (link?.sanfl_grade === 'under-16') competitionLabel = 'SANFL Under 16'
+    else if (link?.sanfl_grade === 'under-18') competitionLabel = 'SANFL Under 18'
+    else competitionLabel = 'SANFL'
+  }
+  if (competitionLabel === 'Country Football' && link?.grade_name) {
+    competitionLabel = link.grade_name
+  }
+
+  let ctx = `Competition: ${competitionLabel}
+Home Team: ${home}
+Away Team: ${away}
 Venue: ${match.venue ?? 'Unknown'}
 Date: ${match.date ?? 'Unknown'}
-Final Score: ${match.home_team} ${match.home_final_score} - ${match.away_final_score} ${match.away_team}
+Final Score: ${home} ${match.home_final_score} - ${match.away_final_score} ${away}
 Margin: ${margin} points
 Match Competitiveness Analysis: margin is ${margin} points`
 
@@ -86,13 +114,12 @@ export async function POST(req: NextRequest) {
 
   const link = await prisma.matchLink.findFirst({ where: { match_id: matchId } })
 
-  const competition   = COMPETITION_MAP[link?.competition ?? ''] ?? 'SANFL'
-  const countryLeague = competition === 'Country Football'
-    ? (PLAYHQ_TO_COUNTRY_LEAGUE[link?.competition ?? ''] ?? undefined)
-    : undefined
+  const competition   = link?.competition ?? 'Unknown'
+  const amateurGrade  = link?.amateur_grade ?? null
+  const sanflGrade    = link?.sanfl_grade   ?? null
 
-  const context   = buildContext(match, link)
-  const prompt    = getPrompt('Magazine match report').replace('{context}', context)
+  const context = buildContext(match, link)
+  const prompt  = getPrompt('Magazine match report').replace('{context}', context)
 
   let report      = ''
   let passed      = false
@@ -118,7 +145,7 @@ export async function POST(req: NextRequest) {
         model: MODEL, temperature: 0, max_tokens: 200,
         messages: [{ role: 'user', content: buildQualityPrompt(report, match) }],
       })
-      const raw = qc.choices[0].message.content ?? '{}'
+      const raw    = qc.choices[0].message.content ?? '{}'
       const result = JSON.parse(raw.replace(/```json|```/g, '').trim())
       passed      = result.passed
       lastReasons = result.reasons ?? []
@@ -130,22 +157,30 @@ export async function POST(req: NextRequest) {
 
   if (!passed) {
     return NextResponse.json({
-      success: false,
-      matchId,
+      success: false, matchId,
       error: `Quality check failed after ${MAX_ATTEMPTS} attempts`,
       reasons: lastReasons,
     }, { status: 422 })
   }
 
-  // Publish to Sanity
-  const title  = `${match.home_team} v ${match.away_team}`
-  const slug   = slugify(`${title} ${match.date?.slice(0, 10) ?? ''}`)
-  const author = AUTHORS[Math.floor(Math.random() * AUTHORS.length)]
+  // Build title and slug
+  const homeClean = (match.home_team ?? '').replace(/\s*-\s*\w+\s*$/i, '').trim()
+  const awayClean = (match.away_team ?? '').replace(/\s*-\s*\w+\s*$/i, '').trim()
+  const title     = `${homeClean} v ${awayClean}`
+  const slug      = slugify(`${title} ${match.date?.slice(0, 10) ?? ''}`)
+  const author    = AUTHORS[Math.floor(Math.random() * AUTHORS.length)]
+
+  // Determine country league
+  const countryLeague = competition === 'Country Football'
+    ? (link?.grade_name ?? null)
+    : null
 
   const result = await publishToSanity({
     title, slug, competition,
     contentText: report, author,
     countryLeague,
+    amateurGrade,
+    sanflGrade,
     homeTeam:  match.home_team ?? '',
     awayTeam:  match.away_team ?? '',
     homeScore: String(match.home_final_score ?? ''),
