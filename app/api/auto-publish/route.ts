@@ -204,6 +204,7 @@ export async function POST(req: NextRequest) {
         generated_at: new Date().toISOString(),
       }
     })
+    
   } catch { /* non-fatal */ }
 
   console.log(`[AUTO] Published ${slug} after ${attempt} attempt(s)`)
