@@ -5,6 +5,7 @@ import { GenerateStep }    from '@/components/steps/GenerateStep'
 import { KnowledgeStep }   from '@/components/steps/KnowledgeStep'
 import { MatchSelectStep } from '@/components/steps/MatchSelectStep'
 import { PublishStep }     from '@/components/steps/PublishStep'
+import { BatchPublishStep } from '@/components/steps/BatchPublishStep'
 
 export type MatchLink = {
   id: number
@@ -62,9 +63,10 @@ export default function DashboardPage() {
   useEffect(() => { if (kbReady) window.dispatchEvent(new Event('safie:kb-ready')) }, [kbReady])
   useEffect(() => { if (generatedContent) window.dispatchEvent(new Event('safie:content-ready')) }, [generatedContent])
 
+  const isBatch     = selectedIds.length > 1
+  const firstMeta   = kbResults[0]?.meta
+  const firstMatchId = kbResults[0]?.matchId ?? 'unknown'
   const combinedContext = kbResults.map(r => r.knowledge).join('\n\n---\n\n')
-  const firstMeta       = kbResults[0]?.meta
-  const firstMatchId    = kbResults[0]?.matchId ?? 'unknown'
 
   function resetAll(ids: string[]) {
     setSelectedIds(ids)
@@ -95,6 +97,7 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+
         <MatchSelectStep
           grouped={grouped}
           matches={matches}
@@ -111,7 +114,13 @@ export default function DashboardPage() {
           />
         )}
 
-        {kbReady && (
+        {/* ── BATCH MODE (2+ matches) ─────────────────────────────────── */}
+        {kbReady && isBatch && (
+          <BatchPublishStep kbResults={kbResults} />
+        )}
+
+        {/* ── SINGLE MODE (1 match) ───────────────────────────────────── */}
+        {kbReady && !isBatch && (
           <GenerateStep
             context={combinedContext}
             matchId={firstMatchId}
@@ -127,7 +136,7 @@ export default function DashboardPage() {
           />
         )}
 
-        {generatedContent && (
+        {generatedContent && !isBatch && (
           <PublishStep
             content={editedHTML || generatedContent}
             contentType={contentType}
@@ -136,6 +145,7 @@ export default function DashboardPage() {
             onPublished={setPublishedSlug}
           />
         )}
+
       </div>
 
       <div style={{
