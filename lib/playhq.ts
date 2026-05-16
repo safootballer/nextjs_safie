@@ -51,17 +51,28 @@ query gameView($gameId: ID!) {
 
 // ── Strip grade suffixes from team names ───────────────────────────────────────
 // Removes: - M1, - M1R, - W1, - W1R, - C1, - A Grade, - B Grade etc
-export function cleanTeamName(name: string): string {
+function cleanTeamName(name: string): string {
   return name
-    .replace(/\s*-\s*M\d+R?\s*$/i, '')        // - M1, - M2R etc
-    .replace(/\s*-\s*W\d+R?\s*$/i, '')        // - W1, - W2R etc
-    .replace(/\s*-\s*C\d+\s*$/i, '')          // - C1, - C2 etc
-    .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '') // - A Grade, A Grade (with or without dash)
-    .replace(/\s*-\s*Under\s*\d+\s*$/i, '')   // - Under 16, - Under 18
-    .replace(/\s*-\s*U\d+\s*$/i, '')          // - U16, - U18
-    .replace(/\s*\bM\d+R?\b\s*$/i, '')        // M1, M2R without dash
-    .replace(/\s*\bW\d+R?\b\s*$/i, '')        // W1, W2R without dash
-    .replace(/\s*\bC\d+\b\s*$/i, '')          // C1, C2 without dash
+    .replace(/\s*-\s*M\d+R?\s*$/i, '')
+    .replace(/\s*-\s*W\d+R?\s*$/i, '')
+    .replace(/\s*-\s*C\d+\s*$/i, '')
+    .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
+    .replace(/\s*-\s*Under\s*\d+\s*$/i, '')
+    .replace(/\s*-\s*U\d+\s*$/i, '')
+    .replace(/\s*\bM\d+R?\b\s*$/i, '')
+    .replace(/\s*\bW\d+R?\b\s*$/i, '')
+    .replace(/\s*\bC\d+\b\s*$/i, '')
+    .replace(/\s*[-–]\s*Men'?s?\s*$/i, '')
+    .replace(/\s*[-–]\s*Women'?s?\s*$/i, '')
+    .replace(/\s*\bMen'?s?\b\s*$/i, '')
+    .replace(/\s*\bWomen'?s?\b\s*$/i, '')
+    .replace(/\s*[-–]\s*Seniors?\s*$/i, '')
+    .replace(/\s*[-–]\s*Juniors?\s*$/i, '')
+    .replace(/\s*\bSeniors?\b\s*$/i, '')
+    .replace(/\s*\bJuniors?\b\s*$/i, '')
+    .replace(/\s*[-–]?\s*[A-H]\s+Grade\s*$/i, '')
+    .replace(/\s*[-–]?\s*Senior\s+Men'?s?\s*$/i, '')
+    .replace(/\s*[-–]?\s*Senior\s+Women'?s?\s*$/i, '')
     .trim()
 }
 

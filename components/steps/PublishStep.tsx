@@ -103,18 +103,29 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     .replace(/^#+\s*/, '').replace(/\*+/g, '').slice(0, 120)
 
   function cleanTeamName(name: string): string {
-    return name
-      .replace(/\s*-\s*M\d+R?\s*$/i, '')
-      .replace(/\s*-\s*W\d+R?\s*$/i, '')
-      .replace(/\s*-\s*C\d+\s*$/i, '')
-      .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
-      .replace(/\s*-\s*Under\s*\d+\s*$/i, '')
-      .replace(/\s*-\s*U\d+\s*$/i, '')
-      .replace(/\s*\bM\d+R?\b\s*$/i, '')
-      .replace(/\s*\bW\d+R?\b\s*$/i, '')
-      .replace(/\s*\bC\d+\b\s*$/i, '')
-      .trim()
-  }
+  return name
+    .replace(/\s*-\s*M\d+R?\s*$/i, '')
+    .replace(/\s*-\s*W\d+R?\s*$/i, '')
+    .replace(/\s*-\s*C\d+\s*$/i, '')
+    .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
+    .replace(/\s*-\s*Under\s*\d+\s*$/i, '')
+    .replace(/\s*-\s*U\d+\s*$/i, '')
+    .replace(/\s*\bM\d+R?\b\s*$/i, '')
+    .replace(/\s*\bW\d+R?\b\s*$/i, '')
+    .replace(/\s*\bC\d+\b\s*$/i, '')
+    .replace(/\s*[-–]\s*Men'?s?\s*$/i, '')
+    .replace(/\s*[-–]\s*Women'?s?\s*$/i, '')
+    .replace(/\s*\bMen'?s?\b\s*$/i, '')
+    .replace(/\s*\bWomen'?s?\b\s*$/i, '')
+    .replace(/\s*[-–]\s*Seniors?\s*$/i, '')
+    .replace(/\s*[-–]\s*Juniors?\s*$/i, '')
+    .replace(/\s*\bSeniors?\b\s*$/i, '')
+    .replace(/\s*\bJuniors?\b\s*$/i, '')
+    .replace(/\s*[-–]?\s*[A-H]\s+Grade\s*$/i, '')
+    .replace(/\s*[-–]?\s*Senior\s+Men'?s?\s*$/i, '')
+    .replace(/\s*[-–]?\s*Senior\s+Women'?s?\s*$/i, '')
+    .trim()
+}
 
   const [title, setTitle]                 = useState(cleanTitle)
   const [slug, setSlug]                   = useState(slugify(cleanTitle))
