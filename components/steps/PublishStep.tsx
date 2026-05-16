@@ -56,6 +56,8 @@ interface Meta {
   awayTeam: string
   homeScore: number
   awayScore: number
+  homeScoreFormatted?: string
+  awayScoreFormatted?: string
   date: string
   venue: string
   amateurGrade?: string | null
@@ -139,8 +141,10 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
 
     if (meta.homeTeam) setHomeTeam(cleanTeamName(meta.homeTeam))
     if (meta.awayTeam) setAwayTeam(cleanTeamName(meta.awayTeam))
-    if (meta.homeScore) setHomeScore(formatScore(meta.homeScore))
-    if (meta.awayScore) setAwayScore(formatScore(meta.awayScore))
+    if (meta.homeScoreFormatted) setHomeScore(meta.homeScoreFormatted)
+    else if (meta.homeScore) setHomeScore(formatScore(meta.homeScore))
+    if (meta.awayScoreFormatted) setAwayScore(meta.awayScoreFormatted)
+    else if (meta.awayScore) setAwayScore(formatScore(meta.awayScore))
     if (meta.venue) setVenue(meta.venue)
 
     if (meta.date) {

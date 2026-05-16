@@ -112,6 +112,8 @@ export async function POST(req: NextRequest) {
           competition:           detectedCompetition,
           homeScore:             match.final_score.home,
           awayScore:             match.final_score.away,
+          homeScoreFormatted:    match.period_scores.home.Q4 ?? String(match.final_score.home),
+          awayScoreFormatted:    match.period_scores.away.Q4 ?? String(match.final_score.away),
           margin:                Math.abs(match.final_score.home - match.final_score.away),
           detectedCountryLeague: detectedLeague,
           isCountryFootball,

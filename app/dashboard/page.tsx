@@ -29,6 +29,8 @@ export type KBResult = {
     competition: string
     homeScore: number
     awayScore: number
+    homeScoreFormatted: string
+    awayScoreFormatted: string
     margin: number
     detectedCountryLeague: string | null
     isCountryFootball: boolean
