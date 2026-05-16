@@ -25,24 +25,40 @@ function ToolbarBtn({ onClick, active, title, children }: {
   children: React.ReactNode
 }) {
   return (
-    <button
-      onClick={onClick}
-      title={title}
-      style={{
-        padding: '4px 10px',
-        borderRadius: 6,
-        border: 'none',
-        cursor: 'pointer',
-        fontWeight: 700,
-        fontSize: '0.85rem',
-        background: active ? '#2ca3ee' : 'rgba(255,255,255,0.08)',
-        color: active ? '#fff' : 'rgba(255,255,255,0.75)',
-        transition: 'all 0.15s',
-      }}
-    >
+    <button onClick={onClick} title={title} style={{
+      padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer',
+      fontWeight: 700, fontSize: '0.85rem',
+      background: active ? '#2ca3ee' : 'rgba(255,255,255,0.08)',
+      color: active ? '#fff' : 'rgba(255,255,255,0.75)',
+      transition: 'all 0.15s',
+    }}>
       {children}
     </button>
   )
+}
+
+// Convert AI markdown output to proper HTML
+function markdownToHtml(text: string): string {
+  return text
+    .split('\n\n')
+    .filter(Boolean)
+    .map(block => {
+      const trimmed = block.trim()
+
+      // **HEADING** alone on a line → <h2>
+      if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
+        const heading = trimmed.replace(/^\*\*|\*\*$/g, '').trim()
+        return `<h2>${heading}</h2>`
+      }
+
+      // Paragraph with possible inline **bold**
+      const withBold = trimmed
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>')
+
+      return `<p>${withBold}</p>`
+    })
+    .join('')
 }
 
 export function GenerateStep({
@@ -60,19 +76,14 @@ export function GenerateStep({
   const editor = useEditor({
     extensions: [StarterKit, Underline],
     content: '',
-    onUpdate: ({ editor }) => {
-      onContentChange(editor.getHTML())
-    },
+    onUpdate: ({ editor }) => { onContentChange(editor.getHTML()) },
     editorProps: {
       attributes: {
         style: [
-          'min-height: 300px',
-          'outline: none',
+          'min-height: 300px', 'outline: none',
           'font-family: Barlow, sans-serif',
-          'font-size: 0.9rem',
-          'line-height: 1.75',
-          'color: #111',
-          'padding: 0',
+          'font-size: 0.9rem', 'line-height: 1.75',
+          'color: #111', 'padding: 0',
         ].join(';'),
       },
     },
@@ -80,11 +91,7 @@ export function GenerateStep({
 
   useEffect(() => {
     if (editor && generatedContent && !generatedContent.startsWith('<')) {
-      const html = generatedContent
-        .split('\n\n')
-        .filter(Boolean)
-        .map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>')
-        .join('')
+      const html = markdownToHtml(generatedContent)
       editor.commands.setContent(html)
       onContentChange(editor.getHTML())
     }
@@ -133,12 +140,10 @@ export function GenerateStep({
 
   const labelStyle = {
     display: 'block' as const,
-    fontSize: '0.75rem',
-    fontWeight: 700,
+    fontSize: '0.75rem', fontWeight: 700,
     color: 'rgba(255,255,255,0.5)' as const,
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
-    marginBottom: '0.4rem',
+    letterSpacing: '0.08em', marginBottom: '0.4rem',
   }
 
   return (
@@ -167,9 +172,7 @@ export function GenerateStep({
               fontWeight: 700, fontSize: '1.2rem',
               color: '#2ca3ee', textTransform: 'uppercase',
               letterSpacing: '0.04em', margin: 0,
-            }}>
-              Generated Content
-            </h3>
+            }}>Generated Content</h3>
             <button onClick={copyText} className="btn-yellow" style={{ fontSize: '0.8rem', padding: '0.5rem 1.25rem' }}>
               {copied ? 'Copied!' : 'Copy Text'}
             </button>
@@ -181,8 +184,7 @@ export function GenerateStep({
             padding: '8px 12px',
             background: 'rgba(255,255,255,0.05)',
             border: '1.5px solid rgba(44,163,238,0.3)',
-            borderBottom: 'none',
-            borderRadius: '10px 10px 0 0',
+            borderBottom: 'none', borderRadius: '10px 10px 0 0',
           }}>
             <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">B</ToolbarBtn>
             <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic">I</ToolbarBtn>
@@ -205,16 +207,14 @@ export function GenerateStep({
           <div style={{
             background: '#fff',
             border: '1.5px solid rgba(44,163,238,0.3)',
-            borderTop: 'none',
-            borderRadius: '0 0 10px 10px',
-            padding: '1.25rem 1.5rem',
-            marginBottom: '1.25rem',
+            borderTop: 'none', borderRadius: '0 0 10px 10px',
+            padding: '1.25rem 1.5rem', marginBottom: '1.25rem',
           }}>
             <EditorContent editor={editor} />
           </div>
 
           <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginBottom: '1.25rem', marginTop: '-0.75rem' }}>
-            Press <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Enter</strong> for new paragraph · <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Shift+Enter</strong> for line break within paragraph · Use toolbar buttons for formatting
+            Press <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Enter</strong> for new paragraph · <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Shift+Enter</strong> for line break · Use toolbar for formatting
           </p>
 
           {/* Metrics */}
@@ -244,31 +244,19 @@ export function GenerateStep({
                 Review and edit below, then post.
               </p>
               <label style={labelStyle}>Edit post</label>
-              <textarea
-                value={fbText}
-                onChange={e => setFbText(e.target.value)}
-                rows={7}
-                className="input-field"
-                style={{ marginBottom: '0.4rem' }}
-              />
+              <textarea value={fbText} onChange={e => setFbText(e.target.value)} rows={7} className="input-field" style={{ marginBottom: '0.4rem' }} />
               <p style={{ fontSize: '0.75rem', marginBottom: '1rem', color: fbText.length > 63206 ? '#f87171' : 'rgba(255,255,255,0.3)' }}>
                 {fbText.length} / 63,206 characters
               </p>
               <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>Photo (optional)</label>
-              <input
-                type="file" accept="image/jpg,image/jpeg,image/png"
+              <input type="file" accept="image/jpg,image/jpeg,image/png"
                 onChange={e => setFbPhoto(e.target.files?.[0] ?? null)}
-                style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem', display: 'block' }}
-              />
+                style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem', display: 'block' }} />
               {fbPhoto && (
                 <img src={URL.createObjectURL(fbPhoto)} alt="preview"
                   style={{ width: 180, borderRadius: 10, marginBottom: '1rem', border: '1px solid rgba(44,163,238,0.4)' }} />
               )}
-              <button
-                onClick={postToFacebook}
-                disabled={fbLoading || fbText.length > 63206}
-                className="btn-primary" style={{ width: '100%' }}
-              >
+              <button onClick={postToFacebook} disabled={fbLoading || fbText.length > 63206} className="btn-primary" style={{ width: '100%' }}>
                 {fbLoading ? 'Posting...' : 'Post to Facebook Now'}
               </button>
               {fbResult && (
