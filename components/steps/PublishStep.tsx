@@ -100,6 +100,20 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const cleanTitle = (plain.split('\n').map(l => l.trim()).find(l => l.length > 5) ?? '')
     .replace(/^#+\s*/, '').replace(/\*+/g, '').slice(0, 120)
 
+  function cleanTeamName(name: string): string {
+    return name
+      .replace(/\s*-\s*M\d+R?\s*$/i, '')
+      .replace(/\s*-\s*W\d+R?\s*$/i, '')
+      .replace(/\s*-\s*C\d+\s*$/i, '')
+      .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
+      .replace(/\s*-\s*Under\s*\d+\s*$/i, '')
+      .replace(/\s*-\s*U\d+\s*$/i, '')
+      .replace(/\s*\bM\d+R?\b\s*$/i, '')
+      .replace(/\s*\bW\d+R?\b\s*$/i, '')
+      .replace(/\s*\bC\d+\b\s*$/i, '')
+      .trim()
+  }
+
   const [title, setTitle]                 = useState(cleanTitle)
   const [slug, setSlug]                   = useState(slugify(cleanTitle))
   const [author, setAuthor]               = useState(AUTHORS[0])
@@ -123,8 +137,8 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   useEffect(() => {
     if (!meta) return
 
-    if (meta.homeTeam) setHomeTeam(meta.homeTeam)
-    if (meta.awayTeam) setAwayTeam(meta.awayTeam)
+    if (meta.homeTeam) setHomeTeam(cleanTeamName(meta.homeTeam))
+    if (meta.awayTeam) setAwayTeam(cleanTeamName(meta.awayTeam))
     if (meta.homeScore) setHomeScore(formatScore(meta.homeScore))
     if (meta.awayScore) setAwayScore(formatScore(meta.awayScore))
     if (meta.venue) setVenue(meta.venue)
