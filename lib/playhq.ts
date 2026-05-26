@@ -92,6 +92,11 @@ export function cleanTeamName(name: string): string {
     .replace(/\s*\bMixed\b\s*$/i, '')
     .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '')
     .replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')      // U14 Mixed
+    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '') // Under 14 Mixed
+    .replace(/\s*\bMixed\b\s*$/i, '')                  // Mixed (leftover)
+    .replace(/\s*\bU[\d.]+s?\b\s*$/i, '')              // U14, U18s
+    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '')         // Under 14
     .replace(/\s*\bColts\b\s*$/i, '')
     .trim()
 }
