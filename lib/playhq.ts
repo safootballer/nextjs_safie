@@ -51,7 +51,7 @@ query gameView($gameId: ID!) {
 
 // ── Strip grade suffixes from team names ───────────────────────────────────────
 // Removes: - M1, - M1R, - W1, - W1R, - C1, - A Grade, - B Grade etc
-function cleanTeamName(name: string): string {
+export function cleanTeamName(name: string): string {
   return name
     .replace(/\s*-\s*M\d+R?\s*$/i, '')
     .replace(/\s*-\s*W\d+R?\s*$/i, '')
@@ -73,6 +73,12 @@ function cleanTeamName(name: string): string {
     .replace(/\s*[-–]?\s*[A-H]\s+Grade\s*$/i, '')
     .replace(/\s*[-–]?\s*Senior\s+Men'?s?\s*$/i, '')
     .replace(/\s*[-–]?\s*Senior\s+Women'?s?\s*$/i, '')
+    .replace(/\s+Football Club\s*$/i, '')
+    .replace(/\s+FC\s*$/i, '')
+    .replace(/\s*\bLeague\b\s*$/i, '')
+    .replace(/\s*\bReserves\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*\d+\b\s*$/i, '')
+    .replace(/\s*\bU\d+\b\s*$/i, '')
     .trim()
 }
 
