@@ -66,6 +66,10 @@ function cleanTeamName(name: string): string {
     .replace(/\s*\bU[\d.]+s?\b\s*$/i, '')
     .replace(/\s*\bSnr\s+Colts\b\s*$/i, '')
     .replace(/\s*\bSenior\s+Colts\b\s*$/i, '')
+    .replace(/\s*\bMixed\b\s*$/i, '')
+    .replace(/\s*\bMixed\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
     .replace(/\s*\bColts\b\s*$/i, '')
     .trim()
 }
