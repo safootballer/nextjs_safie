@@ -56,29 +56,22 @@ function cleanTeamName(name: string): string {
     .replace(/\s+FC\s*$/i, '')
     .replace(/\s*\bLeague\b\s*$/i, '')
     .replace(/\s*\bReserves\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '')
     .replace(/\s*\bBoys\s+Under\s*[\d.]+\b\s*$/i, '')
     .replace(/\s*\bGirls\s+Under\s*[\d.]+\b\s*$/i, '')
     .replace(/\s*\bUnder\s*[\d.]+\s*Boys\b\s*$/i, '')
     .replace(/\s*\bUnder\s*[\d.]+\s*Girls\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '')
     .replace(/\s*\bU[\d.]+\s*Boys\b\s*$/i, '')
     .replace(/\s*\bU[\d.]+\s*Girls\b\s*$/i, '')
     .replace(/\s*\bU[\d.]+s?\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '')
     .replace(/\s*\bSnr\s+Colts\b\s*$/i, '')
     .replace(/\s*\bSenior\s+Colts\b\s*$/i, '')
-    .replace(/\s*\bMixed\b\s*$/i, '')
-    .replace(/\s*\bMixed\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '')
-    .replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
-    .replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')      // U14 Mixed
-    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '') // Under 14 Mixed
-    .replace(/\s*\bMixed\b\s*$/i, '')                  // Mixed (leftover)
-    .replace(/\s*\bU[\d.]+s?\b\s*$/i, '')              // U14, U18s
-    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '')         // Under 14
     .replace(/\s*\bColts\b\s*$/i, '')
+    .replace(/\s*\bMixed\b\s*$/i, '')
     .trim()
 }
-
 
 function markdownToHtml(text: string): string {
   return text.split('\n\n').filter(Boolean).map(block => {
@@ -96,20 +89,20 @@ function MatchCard({ kb }: { kb: KBResult }) {
   const homeTeam = cleanTeamName(meta.homeTeam)
   const awayTeam = cleanTeamName(meta.awayTeam)
 
-  const [generating, setGenerating]   = useState(false)
-  const [publishing, setPublishing]   = useState(false)
-  const [generated, setGenerated]     = useState('')
+  const [generating, setGenerating]       = useState(false)
+  const [publishing, setPublishing]       = useState(false)
+  const [generated, setGenerated]         = useState('')
   const [publishedSlug, setPublishedSlug] = useState('')
-  const [error, setError]             = useState('')
+  const [error, setError]                 = useState('')
 
-  const [competition, setCompetition] = useState(
+  const [competition, setCompetition]     = useState(
     COMPETITION_OPTIONS.includes(meta.competition) ? meta.competition : 'AFL'
   )
-  const [amateurGrade, setAmateurGrade] = useState(meta.amateurGrade ?? '')
-  const [sawflGrade, setSawflGrade]     = useState(meta.amateurGrade ?? '')
-  const [sanflGrade, setSanflGrade]     = useState(meta.sanflGrade ?? '')
+  const [amateurGrade, setAmateurGrade]   = useState(meta.amateurGrade ?? '')
+  const [sawflGrade, setSawflGrade]       = useState(meta.amateurGrade ?? '')
+  const [sanflGrade, setSanflGrade]       = useState(meta.sanflGrade ?? '')
   const [countryLeague, setCountryLeague] = useState(meta.detectedCountryLeague ?? '')
-  const [author, setAuthor]             = useState(AUTHORS[Math.floor(Math.random() * AUTHORS.length)])
+  const [author, setAuthor]               = useState(AUTHORS[Math.floor(Math.random() * AUTHORS.length)])
 
   const editor = useEditor({
     extensions: [StarterKit, Underline],
@@ -132,9 +125,7 @@ function MatchCard({ kb }: { kb: KBResult }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Generation failed')
       setGenerated(data.content)
-      if (editor) {
-        editor.commands.setContent(markdownToHtml(data.content))
-      }
+      if (editor) editor.commands.setContent(markdownToHtml(data.content))
     } catch (e: any) { setError(e.message) }
     setGenerating(false)
   }
@@ -142,11 +133,13 @@ function MatchCard({ kb }: { kb: KBResult }) {
   async function publish() {
     setPublishing(true); setError('')
     const content = editor ? editor.getHTML() : generated
-    const title   = `${homeTeam} v ${awayTeam}`
-    const slug    = slugify(`${title} ${meta.date?.slice(0, 10) ?? ''}`)
+    const title   = meta.venue
+      ? `${homeTeam} v ${awayTeam} @ ${meta.venue}`
+      : `${homeTeam} v ${awayTeam}`
+    const slug    = slugify(`${homeTeam} v ${awayTeam} ${meta.date?.slice(0, 10) ?? ''}`)
 
     try {
-      const res  = await fetch('/api/publish', {
+      const res = await fetch('/api/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -179,7 +172,6 @@ function MatchCard({ kb }: { kb: KBResult }) {
 
   return (
     <div className="glass-card" style={{ padding: '1.5rem', borderLeft: '4px solid #2ca3ee' }}>
-      {/* Match header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '1.2rem', color: '#e6fe00' }}>
@@ -224,7 +216,6 @@ function MatchCard({ kb }: { kb: KBResult }) {
 
       {error && <div className="alert-error" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{error}</div>}
 
-      {/* Grade selectors */}
       {generated && (
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <div style={{ flex: '1 1 160px' }}>
@@ -278,12 +269,8 @@ function MatchCard({ kb }: { kb: KBResult }) {
         </div>
       )}
 
-      {/* Editor */}
       {generated && editor && (
-        <div style={{
-          background: '#fff', border: '1.5px solid rgba(44,163,238,0.3)',
-          borderRadius: 10, padding: '1rem 1.25rem',
-        }}>
+        <div style={{ background: '#fff', border: '1.5px solid rgba(44,163,238,0.3)', borderRadius: 10, padding: '1rem 1.25rem' }}>
           <EditorContent editor={editor} />
         </div>
       )}
@@ -293,8 +280,6 @@ function MatchCard({ kb }: { kb: KBResult }) {
 
 // ── Batch publish step ─────────────────────────────────────────────────────────
 export function BatchPublishStep({ kbResults }: { kbResults: KBResult[] }) {
-  const [generatingAll, setGeneratingAll] = useState(false)
-
   return (
     <section className="fade-up">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -303,7 +288,6 @@ export function BatchPublishStep({ kbResults }: { kbResults: KBResult[] }) {
           Generate and review each report individually, then publish
         </div>
       </div>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {kbResults.map(kb => (
           <MatchCard key={kb.matchId} kb={kb} />
