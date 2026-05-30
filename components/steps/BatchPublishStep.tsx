@@ -73,14 +73,72 @@ function cleanTeamName(name: string): string {
     .trim()
 }
 
-function markdownToHtml(text: string): string {
-  return text.split('\n\n').filter(Boolean).map(block => {
-    const trimmed = block.trim()
-    if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
-      return `<h2>${trimmed.replace(/^\*\*|\*\*$/g, '').trim()}</h2>`
+export function markdownToHtml(text: string): string {
+  // First normalise single-line pipe tables into multi-line
+  // e.g. "| A | B | |---|---| | X | Y |" → proper lines
+  const normalised = text.replace(
+    /(\|[^\n]+\|)\s*(\|[-| :]+\|)\s*((?:\|[^\n]+\|\s*)+)/g,
+    (_, header, separator, rows) => {
+      const rowLines = rows.trim().split(/\s*(?=\|)/).filter((r: string) => r.trim())
+      return [header, separator, ...rowLines].join('\n')
     }
-    return `<p>${trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>`
-  }).join('')
+  )
+
+  const blocks = normalised.split('\n\n').filter(Boolean)
+  const result: string[] = []
+  let i = 0
+
+  while (i < blocks.length) {
+    const block = blocks[i].trim()
+    const lines = block.split('\n').map((l: string) => l.trim()).filter(Boolean)
+    const isPipeTable = lines.length >= 2 && lines.every((l: string) => l.includes('|'))
+
+    if (isPipeTable) {
+      const rows = lines.map(line =>
+        line.split('|').map((cell: string) => cell.trim()).filter((cell: string, idx: number, arr: string[]) => !(idx === 0 && cell === '') && !(idx === arr.length - 1 && cell === ''))
+      )
+      const headerRow = rows[0]
+      const isSeparator = rows[1]?.every((cell: string) => /^[-: ]+$/.test(cell))
+      const dataRows = isSeparator ? rows.slice(2) : rows.slice(1)
+
+      let table = '<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.88rem">'
+      table += '<thead><tr style="background:#2ca3ee;color:#fff">'
+      headerRow.forEach((cell: string) => {
+        table += `<th style="padding:0.4rem 0.75rem;text-align:center;font-weight:700;border:1px solid #d1d5db">${cell}</th>`
+      })
+      table += '</tr></thead><tbody>'
+      dataRows.forEach((row: string[], ri: number) => {
+        const bg = ri % 2 === 0 ? '#f9fafb' : '#fff'
+        table += `<tr style="background:${bg}">`
+        row.forEach((cell: string, ci: number) => {
+          const align = ci === 0 ? 'left' : 'center'
+          const weight = ci === 0 ? '600' : '400'
+          table += `<td style="padding:0.4rem 0.75rem;text-align:${align};font-weight:${weight};border:1px solid #d1d5db">${cell}</td>`
+        })
+        table += '</tr>'
+      })
+      table += '</tbody></table>'
+      result.push(table)
+      i++
+      continue
+    }
+
+    if (/^\*\*[^*\n]+\*\*$/.test(block)) {
+      result.push(`<h2>${block.replace(/^\*\*|\*\*$/g, '').trim()}</h2>`)
+      i++
+      continue
+    }
+
+    result.push(
+      `<p>${block
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>')
+      }</p>`
+    )
+    i++
+  }
+
+  return result.join('')
 }
 
 // ── Single match card ──────────────────────────────────────────────────────────

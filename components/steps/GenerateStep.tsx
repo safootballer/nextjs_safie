@@ -39,24 +39,63 @@ function ToolbarBtn({ onClick, active, title, children }: {
 
 // Convert AI markdown output to proper HTML
 function markdownToHtml(text: string): string {
-  return text
+  // Normalise single-line pipe tables into multi-line
+  const normalised = text.replace(
+    /(\|[^\n]+\|)\s*(\|[-| :]+\|)\s*((?:\|[^\n]+\|\s*)+)/g,
+    (_: string, header: string, separator: string, rows: string) => {
+      const rowLines = rows.trim().split(/\s*(?=\|)/).filter((r: string) => r.trim())
+      return [header, separator, ...rowLines].join('\n')
+    }
+  )
+
+  return normalised
     .split('\n\n')
     .filter(Boolean)
     .map(block => {
       const trimmed = block.trim()
+      const lines = trimmed.split('\n').map((l: string) => l.trim()).filter(Boolean)
+      const isPipeTable = lines.length >= 2 && lines.every((l: string) => l.includes('|'))
 
-      // **HEADING** alone on a line → <h2>
-      if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
-        const heading = trimmed.replace(/^\*\*|\*\*$/g, '').trim()
-        return `<h2>${heading}</h2>`
+      if (isPipeTable) {
+        const rows = lines.map(line =>
+          line.split('|').map((cell: string) => cell.trim()).filter((cell: string, idx: number, arr: string[]) =>
+            !(idx === 0 && cell === '') && !(idx === arr.length - 1 && cell === '')
+          )
+        )
+        const headerRow = rows[0]
+        const isSeparator = rows[1]?.every((cell: string) => /^[-: ]+$/.test(cell))
+        const dataRows = isSeparator ? rows.slice(2) : rows.slice(1)
+
+        let table = '<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.88rem">'
+        table += '<thead><tr style="background:#2ca3ee;color:#fff">'
+        headerRow.forEach((cell: string) => {
+          table += `<th style="padding:0.4rem 0.75rem;text-align:center;font-weight:700;border:1px solid #d1d5db">${cell}</th>`
+        })
+        table += '</tr></thead><tbody>'
+        dataRows.forEach((row: string[], ri: number) => {
+          const bg = ri % 2 === 0 ? '#f9fafb' : '#fff'
+          table += `<tr style="background:${bg}">`
+          row.forEach((cell: string, ci: number) => {
+            const align = ci === 0 ? 'left' : 'center'
+            const weight = ci === 0 ? '600' : '400'
+            table += `<td style="padding:0.4rem 0.75rem;text-align:${align};font-weight:${weight};border:1px solid #d1d5db">${cell}</td>`
+          })
+          table += '</tr>'
+        })
+        table += '</tbody></table>'
+        return table
       }
 
-      // Paragraph with possible inline **bold**
-      const withBold = trimmed
+      // **HEADING** alone → <h2>
+      if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
+        return `<h2>${trimmed.replace(/^\*\*|\*\*$/g, '').trim()}</h2>`
+      }
+
+      // Regular paragraph
+      return `<p>${trimmed
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\n/g, '<br>')
-
-      return `<p>${withBold}</p>`
+      }</p>`
     })
     .join('')
 }
