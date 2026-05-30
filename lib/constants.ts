@@ -54,11 +54,9 @@ Look at the "Match Competitiveness Analysis" in the context to determine the ton
 STRUCTURE (USE EXACT HEADINGS):
 1. Opening Paragraph (NO HEADING)
 2. Final Scores (EXACT HEADING)
-   Format as a markdown pipe table with header row EXACTLY like this:
-   | Team | Q1 | Q2 | Q3 | Q4 |
-   |---|---|---|---|---|
-   | [Home Team] | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score] |
-   | [Away Team] | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score] |
+   [Team Name]   | [Q1]       | [Q2]       | [Q3]       | [Q4]
+   [Home Team]   | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score]
+   [Away Team]   | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score]
 3. MATCH SUMMARY (EXACT HEADING) — 4 paragraphs, one per quarter. Base each paragraph ONLY on the score data for that quarter.
 4. FINAL WRAP-UP (EXACT HEADING)
 5. BEST PLAYERS (EXACT HEADING)
@@ -71,68 +69,6 @@ Context:
 {context}
 
 Write the magazine match report now.
-`
-
-export const WEB_ARTICLE_PROMPT = `
-You are a digital sports journalist writing an engaging web article for an online audience.
-Write in Australian English throughout.
-
-MANDATORY RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE:
-
-1. SPORT CONTEXT ENFORCEMENT
-   - This sport is Australian Rules Football ONLY.
-   - Never use terminology from other sports especially soccer/football.
-   - BANNED TERMS (non-exhaustive): "back of the net", "clean sheet", "striker", "goalkeeper", "pitch", "nil", "equaliser", "offside", "penalty kick", "free kick" (soccer sense).
-   - Required Australian football terminology: goals, behinds, marks, handballs, tackles, clearances, contested ball, inside 50s, hit-outs, disposals.
-   - Do NOT use "AFL" as a generic term for the sport unless the competition is specifically the AFL competition. Use the actual competition name from the context (e.g. SANFL, SANFLW, Eastern Eyre Football League, Adelaide Footy League etc).
-
-2. DATA GROUNDING — NO HALLUCINATION
-   - You must only use explicitly provided match data.
-   - Do not infer, assume, or fabricate any events, sequences, or outcomes.
-   - If a detail is not present in the data, it must not be mentioned.
-
-3. SCORE ACCURACY RULE
-   - Quarter-by-quarter descriptions must strictly reflect the provided score data.
-   - If goals are recorded in the data for a quarter, they must be acknowledged in the narrative.
-   - You are forbidden from contradicting score data.
-   - CRITICAL — QUARTER CALCULATION: When describing goals and behinds scored IN a quarter, always calculate the DIFFERENCE between that quarter's cumulative score and the previous quarter's cumulative score. Never use the cumulative total as the quarter's score. Example: if a team's Q2 cumulative score is 3.5 and Q3 cumulative score is 6.7, then in Q3 they scored 3 goals and 2 behinds (6-3=3 goals, 7-5=2 behinds).
-
-4. ZERO-SCORE CONDITIONS
-   - You may only state "no goals were scored" or similar phrasing if and only if the data explicitly shows a 0-0 score for that quarter.
-   - Any generic or assumed statement about scoring absence is strictly prohibited.
-
-5. PLAYER DATA CONSTRAINT
-   - Only reference players explicitly listed in the BEST PLAYERS (OFFICIAL) and GOAL SCORERS (OFFICIAL) sections.
-   - Do not attribute actions, performances, or impact to players unless directly supported by the data.
-   - No speculative or narrative embellishment of player performance is allowed.
-   - Do not invent or guess any player names.
-   - If best players are listed for BOTH teams in the data, you MUST mention best players from BOTH teams — do not omit one team's best players.
-   - If best players are only listed for one team in the data, only mention that team's best players. Never invent best players for the other team.
-   - Never assume a team had no best players unless the data explicitly shows none listed for them.
-
-6. CONSISTENCY AND VALIDATION
-   - All generated output must be internally consistent with the provided data.
-   - If any ambiguity exists, default to omission rather than assumption.
-   - Accuracy takes priority over completeness.
-
-7. FAILURE CONDITION
-   - If the data is insufficient to produce a valid statement, omit the statement rather than guess.
-   - Any violation of the above rules is a critical failure.
-
-WEB ARTICLE STRUCTURE:
-1. HEADLINE
-2. LEAD PARAGRAPH
-3. KEY MOMENTS (Section heading)
-4. PLAYER PERFORMANCES (Section heading)
-5. THE STATS (Section heading)
-6. WHAT IT MEANS (Section heading)
-
-LENGTH: 500-650 words
-
-Context:
-{context}
-
-Write the web article now.
 `
 
 export const SOCIAL_MEDIA_PROMPT = `
@@ -169,9 +105,10 @@ MANDATORY RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE:
    - Do not attribute actions, performances, or impact to players unless directly supported by the data.
    - No speculative or narrative embellishment of player performance is allowed.
    - Do not invent or guess any player names.
-   - If best players are listed for BOTH teams in the data, you MUST mention best players from BOTH teams — do not omit one team's best players.
-   - If best players are only listed for one team in the data, only mention that team's best players. Never invent best players for the other team.
-   - Never assume a team had no best players unless the data explicitly shows none listed for them.
+   - THE HEROES section must ONLY appear if best players are explicitly listed for BOTH teams in the data.
+   - If best players are missing for either team — even just one team — skip THE HEROES section completely. Do not mention it at all.
+   - Never write phrases like "no best players were listed", "the entire team showed commendable effort", or any substitute for missing best player data.
+   - ZERO TOLERANCE: Writing THE HEROES section when only one team has best players listed is a CRITICAL FAILURE.
 
 6. CONSISTENCY AND VALIDATION
    - All generated output must be internally consistent with the provided data.
@@ -187,9 +124,8 @@ ADDITIONAL SOCIAL MEDIA RULES:
 - No markdown formatting at all.
 
 SOCIAL MEDIA POST STRUCTURE:
-1. ATTENTION-GRABBING OPENING — start with a strong emoji and punchy sentence
-2. THE STORY (quarter by quarter) — use ⚡ Q1, ⚡ Q2 etc. Base ONLY on score data.
-3. THE HEROES — use ⭐ to highlight best players from BOTH teams if listed in the data
+1. ATTENTION-GRABBING OPENING — start with a strong emoji, then on the next line state: [Home Team] vs [Away Team] at [Venue] on [Date]. Follow with a punchy one-line summary of the result.2. THE STORY (quarter by quarter) — use ⚡ Q1, ⚡ Q2 etc. Base ONLY on score data.
+3. THE HEROES — ONLY include this section if best players are explicitly listed for BOTH teams. If either team is missing best players, skip this section entirely.
 4. BY THE NUMBERS — use 📊 and bullet points with emojis
 5. CLOSING HOOK + hashtags using actual competition/league name from context
 
@@ -204,7 +140,6 @@ Write the social media long-form post now.
 export function getPrompt(contentType: string): string {
   switch (contentType) {
     case 'Magazine match report': return MAGAZINE_PROMPT
-    case 'Web article':           return WEB_ARTICLE_PROMPT
     default:                      return SOCIAL_MEDIA_PROMPT
   }
 }
