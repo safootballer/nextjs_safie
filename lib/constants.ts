@@ -54,7 +54,6 @@ Look at the "Match Competitiveness Analysis" in the context to determine the ton
 STRUCTURE (USE EXACT HEADINGS):
 1. Opening Paragraph (NO HEADING)
 2. Final Scores (EXACT HEADING)
-   [Team Name]   | [Q1]       | [Q2]       | [Q3]       | [Q4]
    [Home Team]   | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score]
    [Away Team]   | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score]
 3. MATCH SUMMARY (EXACT HEADING) — 4 paragraphs, one per quarter. Base each paragraph ONLY on the score data for that quarter.
