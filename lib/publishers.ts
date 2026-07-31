@@ -10,6 +10,8 @@ export function slugify(text: string): string {
     .slice(0, 96)
 }
 
+// ─── REPLACE the htmlToPortableText function in lib/publishers.ts with this ───
+
 function htmlToPortableText(html: string) {
   if (!html.includes('<')) {
     return html.split('\n\n').map(p => p.trim()).filter(Boolean).map(para => ({
@@ -20,6 +22,120 @@ function htmlToPortableText(html: string) {
       children: [{ _type: 'span', _key: uuidv4().replace(/-/g, '').slice(0, 12), text: para, marks: [] }],
     }))
   }
+
+  const blocks: any[] = []
+
+  // Match tables AND h1-h4/p blocks in document order
+  const blockRegex = /<table[^>]*>([\s\S]*?)<\/table>|<(h1|h2|h3|h4|p)[^>]*>([\s\S]*?)<\/\2>/gi
+  let match
+
+  while ((match = blockRegex.exec(html)) !== null) {
+    // ── TABLE ──────────────────────────────────────────────────────
+    if (match[1] !== undefined) {
+      const tableInner = match[1]
+      const rows: string[][] = []
+      const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
+      let rowMatch
+      while ((rowMatch = rowRegex.exec(tableInner)) !== null) {
+        const cells: string[] = []
+        const cellRegex = /<(td|th)[^>]*>([\s\S]*?)<\/\1>/gi
+        let cellMatch
+        while ((cellMatch = cellRegex.exec(rowMatch[1])) !== null) {
+          const text = cellMatch[2].replace(/<[^>]+>/g, '')
+            .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').trim()
+          cells.push(text)
+        }
+        if (cells.length) rows.push(cells)
+      }
+
+      // Render each table row as its own bold block so the score line shows cleanly
+      // Format: "Team    Q1    Q2    Q3    Q4"
+      rows.forEach((cells, ri) => {
+        const line = cells.join('   ')
+        blocks.push({
+          _type: 'block',
+          _key: uuidv4().replace(/-/g, '').slice(0, 12),
+          style: 'normal',
+          markDefs: [],
+          children: [{
+            _type: 'span',
+            _key: uuidv4().replace(/-/g, '').slice(0, 12),
+            text: line,
+            marks: ri === 0 ? ['strong'] : [],
+          }],
+        })
+      })
+      continue
+    }
+
+    // ── H1-H4 / P ──────────────────────────────────────────────────
+    const tag   = match[2].toLowerCase()
+    const inner = match[3]
+
+    const styleMap: Record<string, string> = { h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', p: 'normal' }
+    const style = styleMap[tag] ?? 'normal'
+    const parts = inner.split(/<br\s*\/?>/gi)
+
+    for (const part of parts) {
+      const children: any[] = []
+      const inlineRegex = /<(strong|em|u|b|i)[^>]*>([\s\S]*?)<\/\1>|([^<]+)/gi
+      let inlineMatch
+
+      while ((inlineMatch = inlineRegex.exec(part)) !== null) {
+        if (inlineMatch[3] !== undefined) {
+          const text = inlineMatch[3]
+            .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+            .replace(/&nbsp;/g, ' ').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+          if (text.trim()) {
+            children.push({
+              _type: 'span',
+              _key: uuidv4().replace(/-/g, '').slice(0, 12),
+              text, marks: [],
+            })
+          }
+        } else {
+          const markTag = inlineMatch[1].toLowerCase()
+          const markMap: Record<string, string> = {
+            strong: 'strong', b: 'strong', em: 'em', i: 'em', u: 'underline',
+          }
+          const mark = markMap[markTag] ?? markTag
+          const text = inlineMatch[2]
+            .replace(/<[^>]+>/g, '')
+            .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+            .replace(/&nbsp;/g, ' ')
+          if (text.trim()) {
+            children.push({
+              _type: 'span',
+              _key: uuidv4().replace(/-/g, '').slice(0, 12),
+              text, marks: [mark],
+            })
+          }
+        }
+      }
+
+      if (children.length > 0) {
+        blocks.push({
+          _type: 'block',
+          _key: uuidv4().replace(/-/g, '').slice(0, 12),
+          style, markDefs: [], children,
+        })
+      }
+    }
+  }
+
+  return blocks.length > 0 ? blocks : [{
+    _type: 'block',
+    _key: uuidv4().replace(/-/g, '').slice(0, 12),
+    style: 'normal',
+    markDefs: [],
+    children: [{
+      _type: 'span',
+      _key: uuidv4().replace(/-/g, '').slice(0, 12),
+      text: html.replace(/<[^>]+>/g, ''),
+      marks: [],
+    }],
+  }]
+}
 
   const blocks: any[] = []
   const blockRegex = /<(h1|h2|h3|h4|p)[^>]*>([\s\S]*?)<\/\1>/gi

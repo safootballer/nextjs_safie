@@ -222,7 +222,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     const liveUrl = slug
       ? `https://www.safootballer.com.au/match-results/${slug}`
       : publishedSlug ? `https://www.safootballer.com.au/match-results/${publishedSlug}` : ''
-    const message = plain.slice(0, 900) + (plain.length > 900 ? '...' : '')
+    const message = plain
     try {
       const res = await fetch('/api/publish-facebook', {
         method: 'POST',

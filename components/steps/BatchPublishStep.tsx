@@ -183,7 +183,7 @@ function MatchCard({ kb }: { kb: KBResult }) {
       const res = await fetch('/api/publish-facebook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: plain.slice(0, 900), link: liveUrl }),
+        body: JSON.stringify({ message: plain, link: liveUrl }),
       })
       const data = await res.json()
       if (data.success) setFbSuccess('Posted to Facebook!')
