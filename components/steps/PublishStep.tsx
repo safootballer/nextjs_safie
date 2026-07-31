@@ -75,11 +75,21 @@ interface Props {
 
 function stripHtml(html: string): string {
   return html
-    .replace(/<\/p>/gi, '\n').replace(/<\/h[1-6]>/gi, '\n')
-    .replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<h[1-6][^>]*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<\/td>/gi, ' ')
+    .replace(/<\/th>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
-    .replace(/\n{3,}/g, '\n\n').trim()
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .split('\n').map(l => l.trim()).join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
 function formatScore(score: number): string {
@@ -222,7 +232,21 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     const liveUrl = slug
       ? `https://www.safootballer.com.au/match-results/${slug}`
       : publishedSlug ? `https://www.safootballer.com.au/match-results/${publishedSlug}` : ''
-    const message = plain
+
+    // Build a clean header + full story for Facebook
+    const dateStr = matchDate
+      ? new Date(matchDate).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : ''
+    const header = [
+      title,
+      dateStr && venue ? `${dateStr} · ${venue}` : dateStr || venue,
+      '',
+      `${homeTeam}: ${homeScore}`,
+      `${awayTeam}: ${awayScore}`,
+    ].filter(Boolean).join('\n')
+
+    const message = `${header}\n\n${'—'.repeat(20)}\n\n${plain}`
+
     try {
       const res = await fetch('/api/publish-facebook', {
         method: 'POST',

@@ -104,12 +104,9 @@ function MatchCard({ kb }: { kb: KBResult }) {
 
   const [generating, setGenerating]       = useState(false)
   const [publishing, setPublishing]       = useState(false)
-  const [fbLoading, setFbLoading]         = useState(false)
   const [generated, setGenerated]         = useState('')
   const [publishedSlug, setPublishedSlug] = useState('')
   const [error, setError]                 = useState('')
-  const [fbError, setFbError]             = useState('')
-  const [fbSuccess, setFbSuccess]         = useState('')
 
   const [competition, setCompetition]     = useState(
     COMPETITION_OPTIONS.includes(meta.competition) ? meta.competition : 'AFL'
@@ -146,7 +143,7 @@ function MatchCard({ kb }: { kb: KBResult }) {
     setGenerating(false)
   }
 
-  async function publishToWeb(): Promise<string | null> {
+  async function publish() {
     setPublishing(true); setError('')
     const content = editor ? editor.getHTML() : generated
     const title = meta.venue ? `${homeTeam} v ${awayTeam} @ ${meta.venue}` : `${homeTeam} v ${awayTeam}`
@@ -168,33 +165,10 @@ function MatchCard({ kb }: { kb: KBResult }) {
         }),
       })
       const data = await res.json()
-      if (data.success) { setPublishedSlug(data.slug); return data.slug }
+      if (data.success) setPublishedSlug(data.slug)
       else throw new Error(data.error ?? 'Publish failed')
-    } catch (e: any) { setError(e.message); return null }
-    finally { setPublishing(false) }
-  }
-
-  async function publishToFacebook(slug?: string) {
-    setFbLoading(true); setFbError(''); setFbSuccess('')
-    const content = editor ? editor.getHTML() : generated
-    const plain = content.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
-    const liveUrl = slug ? `https://www.safootballer.com.au/match-results/${slug}` : ''
-    try {
-      const res = await fetch('/api/publish-facebook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: plain, link: liveUrl }),
-      })
-      const data = await res.json()
-      if (data.success) setFbSuccess('Posted to Facebook!')
-      else throw new Error(data.error ?? 'Facebook post failed')
-    } catch (e: any) { setFbError(e.message) }
-    setFbLoading(false)
-  }
-
-  async function publishBoth() {
-    const slug = await publishToWeb()
-    if (slug) await publishToFacebook(slug)
+    } catch (e: any) { setError(e.message) }
+    setPublishing(false)
   }
 
   const labelStyle: React.CSSProperties = {
@@ -234,23 +208,9 @@ function MatchCard({ kb }: { kb: KBResult }) {
                 {generating ? '⏳' : '🔄 Regenerate'}
               </button>
               {!publishedSlug ? (
-                <>
-                  <button onClick={publishToWeb} disabled={publishing || fbLoading} className="btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 1rem' }}>
-                    {publishing ? '⏳' : '🌐 Web'}
-                  </button>
-                  <button onClick={() => publishToFacebook()} disabled={fbLoading || publishing} style={{
-                    background: '#1877F2', color: '#fff', border: 'none', borderRadius: 8,
-                    padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
-                  }}>
-                    {fbLoading ? '⏳' : '📘 Facebook'}
-                  </button>
-                  <button onClick={publishBoth} disabled={publishing || fbLoading} style={{
-                    background: '#e6fe00', color: '#000', border: 'none', borderRadius: 8,
-                    padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
-                  }}>
-                    {publishing || fbLoading ? '⏳' : '🚀 Both'}
-                  </button>
-                </>
+                <button onClick={publish} disabled={publishing} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.5rem 1.25rem' }}>
+                  {publishing ? '⏳ Publishing...' : '🚀 Publish Live'}
+                </button>
               ) : (
                 <a href={`https://www.safootballer.com.au/match-results/${publishedSlug}`} target="_blank" rel="noreferrer"
                   style={{ background: '#4ade80', color: '#000', borderRadius: 8, padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none' }}>
@@ -262,9 +222,7 @@ function MatchCard({ kb }: { kb: KBResult }) {
         </div>
       </div>
 
-      {error    && <div className="alert-error" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{error}</div>}
-      {fbError  && <div className="alert-error" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>Facebook: {fbError}</div>}
-      {fbSuccess && <div style={{ marginBottom: '0.75rem', fontSize: '0.82rem', background: '#f0fdf4', border: '1px solid #4ade80', color: '#166534', padding: '0.5rem 0.75rem', borderRadius: 8 }}>{fbSuccess}</div>}
+      {error && <div className="alert-error" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{error}</div>}
 
       {generated && (
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
