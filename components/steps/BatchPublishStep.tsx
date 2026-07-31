@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import { slugify } from '@/lib/publishers'
-import { AUTHORS, COUNTRY_LEAGUES } from '@/lib/constants'
+import { AUTHORS, COMPETITION_MAP, COUNTRY_LEAGUES } from '@/lib/constants'
 import { KBResult } from '@/app/dashboard/page'
 import { SectionHeading } from './MatchSelectStep'
 
@@ -31,64 +31,51 @@ const AMATEUR_GRADES: Record<string, string> = {
 function cleanTeamName(name: string): string {
   if (!name) return ''
   return name
-    .replace(/\s*-\s*M\d+R?\s*$/i, '').replace(/\s*-\s*W\d+R?\s*$/i, '')
-    .replace(/\s*-\s*C\d+\s*$/i, '').replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
-    .replace(/\s*-\s*Under\s*[\d.]+\s*$/i, '').replace(/\s*-\s*U\d+\s*$/i, '')
-    .replace(/\s*\bM\d+R?\b\s*$/i, '').replace(/\s*\bW\d+R?\b\s*$/i, '')
-    .replace(/\s*\bC\d+\b\s*$/i, '').replace(/\s*[-–]\s*Men'?s?\s*$/i, '')
-    .replace(/\s*[-–]\s*Women'?s?\s*$/i, '').replace(/\s*\bMen'?s?\b\s*$/i, '')
-    .replace(/\s*\bWomen'?s?\b\s*$/i, '').replace(/\s*[-–]\s*Seniors?\s*$/i, '')
-    .replace(/\s*[-–]\s*Juniors?\s*$/i, '').replace(/\s*\bSeniors?\b\s*$/i, '')
-    .replace(/\s*\bJuniors?\b\s*$/i, '').replace(/\s*[-–]?\s*[A-H]\s+Grade\s*$/i, '')
-    .replace(/\s*[-–]?\s*Senior\s+Men'?s?\s*$/i, '').replace(/\s*[-–]?\s*Senior\s+Women'?s?\s*$/i, '')
-    .replace(/\s*[-–]\s*[A-Z]\s*$/i, '').replace(/\s+Football Club\s*$/i, '')
-    .replace(/\s+FC\s*$/i, '').replace(/\s*\bLeague\b\s*$/i, '')
-    .replace(/\s*\bReserves\b\s*$/i, '').replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '').replace(/\s*\bBoys\s+Under\s*[\d.]+\b\s*$/i, '')
-    .replace(/\s*\bGirls\s+Under\s*[\d.]+\b\s*$/i, '').replace(/\s*\bUnder\s*[\d.]+\s*Boys\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\s*Girls\b\s*$/i, '').replace(/\s*\bU[\d.]+\s*Boys\b\s*$/i, '')
-    .replace(/\s*\bU[\d.]+\s*Girls\b\s*$/i, '').replace(/\s*\bU[\d.]+s?\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '').replace(/\s*\bSnr\s+Colts\b\s*$/i, '')
-    .replace(/\s*\bSenior\s+Colts\b\s*$/i, '').replace(/\s*\bColts\b\s*$/i, '')
-    .replace(/\s*\bMixed\b\s*$/i, '').trim()
+    .replace(/\s*-\s*M\d+R?\s*$/i, '')
+    .replace(/\s*-\s*W\d+R?\s*$/i, '')
+    .replace(/\s*-\s*C\d+\s*$/i, '')
+    .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
+    .replace(/\s*-\s*Under\s*[\d.]+\s*$/i, '')
+    .replace(/\s*-\s*U\d+\s*$/i, '')
+    .replace(/\s*\bM\d+R?\b\s*$/i, '')
+    .replace(/\s*\bW\d+R?\b\s*$/i, '')
+    .replace(/\s*\bC\d+\b\s*$/i, '')
+    .replace(/\s*[-–]\s*Men'?s?\s*$/i, '')
+    .replace(/\s*[-–]\s*Women'?s?\s*$/i, '')
+    .replace(/\s*\bMen'?s?\b\s*$/i, '')
+    .replace(/\s*\bWomen'?s?\b\s*$/i, '')
+    .replace(/\s*[-–]\s*Seniors?\s*$/i, '')
+    .replace(/\s*[-–]\s*Juniors?\s*$/i, '')
+    .replace(/\s*\bSeniors?\b\s*$/i, '')
+    .replace(/\s*\bJuniors?\b\s*$/i, '')
+    .replace(/\s*[-–]?\s*[A-H]\s+Grade\s*$/i, '')
+    .replace(/\s*[-–]?\s*Senior\s+Men'?s?\s*$/i, '')
+    .replace(/\s*[-–]?\s*Senior\s+Women'?s?\s*$/i, '')
+    .replace(/\s*[-–]\s*[A-Z]\s*$/i, '')
+    .replace(/\s+Football Club\s*$/i, '')
+    .replace(/\s+FC\s*$/i, '')
+    .replace(/\s*\bLeague\b\s*$/i, '')
+    .replace(/\s*\bReserves\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '')
+    .replace(/\s*\bBoys\s+Under\s*[\d.]+\b\s*$/i, '')
+    .replace(/\s*\bGirls\s+Under\s*[\d.]+\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Boys\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Girls\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+\s*Boys\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+\s*Girls\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+s?\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '')
+    .replace(/\s*\bSnr\s+Colts\b\s*$/i, '')
+    .replace(/\s*\bSenior\s+Colts\b\s*$/i, '')
+    .replace(/\s*\bColts\b\s*$/i, '')
+    .replace(/\s*\bMixed\b\s*$/i, '')
+    .trim()
 }
 
 function markdownToHtml(text: string): string {
-  let normalised = text
-  normalised = normalised.replace(/(\S)\s*\|\s*/g, '$1\n| ')
-  return normalised.split('\n\n').filter(Boolean).map(block => {
+  return text.split('\n\n').filter(Boolean).map(block => {
     const trimmed = block.trim()
-    const lines = trimmed.split('\n').map((l: string) => l.trim()).filter(Boolean)
-    const isPipeTable = lines.length >= 2 && lines.filter((l: string) => l.startsWith('|')).length >= 2
-    if (isPipeTable) {
-      const tableLines = lines.filter((l: string) => l.startsWith('|') && !/^\|[-| :]+\|$/.test(l))
-      const rows = tableLines.map(line =>
-        line.split('|').map((c: string) => c.trim()).filter((c: string, i: number, a: string[]) =>
-          !(i === 0 && c === '') && !(i === a.length - 1 && c === '')
-        )
-      )
-      if (rows.length < 2) return `<p>${trimmed}</p>`
-      const headerRow = rows[0]
-      const dataRows = rows.slice(1)
-      let table = '<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.88rem">'
-      table += '<thead><tr style="background:#2ca3ee;color:#fff">'
-      headerRow.forEach((cell: string) => {
-        table += `<th style="padding:0.4rem 0.75rem;text-align:center;font-weight:700;border:1px solid #d1d5db">${cell}</th>`
-      })
-      table += '</tr></thead><tbody>'
-      dataRows.forEach((row: string[], ri: number) => {
-        const bg = ri % 2 === 0 ? '#f9fafb' : '#fff'
-        table += `<tr style="background:${bg}">`
-        row.forEach((cell: string, ci: number) => {
-          const align = ci === 0 ? 'left' : 'center'
-          const weight = ci === 0 ? '600' : '400'
-          table += `<td style="padding:0.4rem 0.75rem;text-align:${align};font-weight:${weight};border:1px solid #d1d5db">${cell}</td>`
-        })
-        table += '</tr>'
-      })
-      table += '</tbody></table>'
-      return table
-    }
     if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
       return `<h2>${trimmed.replace(/^\*\*|\*\*$/g, '').trim()}</h2>`
     }
@@ -130,7 +117,7 @@ function MatchCard({ kb }: { kb: KBResult }) {
   async function generate() {
     setGenerating(true); setError('')
     try {
-      const res = await fetch('/api/generate', {
+      const res  = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: kb.knowledge, contentType: 'Magazine match report', matchId: kb.matchId }),
@@ -146,8 +133,11 @@ function MatchCard({ kb }: { kb: KBResult }) {
   async function publish() {
     setPublishing(true); setError('')
     const content = editor ? editor.getHTML() : generated
-    const title = meta.venue ? `${homeTeam} v ${awayTeam} @ ${meta.venue}` : `${homeTeam} v ${awayTeam}`
-    const slug  = slugify(`${homeTeam} v ${awayTeam} ${meta.date?.slice(0, 10) ?? ''}`)
+    const title   = meta.venue
+      ? `${homeTeam} v ${awayTeam} @ ${meta.venue}`
+      : `${homeTeam} v ${awayTeam}`
+    const slug    = slugify(`${homeTeam} v ${awayTeam} ${meta.date?.slice(0, 10) ?? ''}`)
+
     try {
       const res = await fetch('/api/publish', {
         method: 'POST',
@@ -161,7 +151,9 @@ function MatchCard({ kb }: { kb: KBResult }) {
           homeTeam, awayTeam,
           homeScore: meta.homeScoreFormatted ?? String(meta.homeScore),
           awayScore: meta.awayScoreFormatted ?? String(meta.awayScore),
-          matchDate: meta.date, venue: meta.venue, asDraft: false,
+          matchDate: meta.date,
+          venue:     meta.venue,
+          asDraft:   false,
         }),
       })
       const data = await res.json()
