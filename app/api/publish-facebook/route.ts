@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { postToFacebook } from '@/lib/publishers'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -8,32 +9,15 @@ export async function POST(req: NextRequest) {
 
   const { message, link } = await req.json()
 
-  const pageId    = process.env.FACEBOOK_PAGE_ID
-  const pageToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+  if (!message) return NextResponse.json({ error: 'No message provided' }, { status: 400 })
 
-  if (!pageId || !pageToken) {
-    return NextResponse.json({ error: 'Facebook credentials not configured' }, { status: 500 })
+  // Append link to message if provided
+  const fullMessage = link ? `${message}\n\n${link}` : message
+
+  const result = await postToFacebook(fullMessage)
+
+  if (result.success) {
+    return NextResponse.json({ success: true, postId: result.result })
   }
-
-  try {
-    const res = await fetch(`https://graph.facebook.com/v21.0/${pageId}/feed`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message,
-        link: link || undefined,
-        access_token: pageToken,
-      }),
-    })
-
-    const data = await res.json()
-
-    if (data.error) {
-      return NextResponse.json({ error: data.error.message }, { status: 400 })
-    }
-
-    return NextResponse.json({ success: true, postId: data.id })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
-  }
+  return NextResponse.json({ success: false, error: result.result }, { status: 500 })
 }
