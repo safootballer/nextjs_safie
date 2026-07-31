@@ -74,13 +74,59 @@ function cleanTeamName(name: string): string {
 }
 
 function markdownToHtml(text: string): string {
-  return text.split('\n\n').filter(Boolean).map(block => {
-    const trimmed = block.trim()
-    if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
-      return `<h2>${trimmed.replace(/^\*\*|\*\*$/g, '').trim()}</h2>`
-    }
-    return `<p>${trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>`
-  }).join('')
+  let normalised = text
+  normalised = normalised.replace(/(\S)\s*\|\s*/g, '$1\n| ')
+
+  return normalised
+    .split('\n\n')
+    .filter(Boolean)
+    .map(block => {
+      const trimmed = block.trim()
+      const lines = trimmed.split('\n').map((l: string) => l.trim()).filter(Boolean)
+      const isPipeTable = lines.length >= 2 && lines.filter((l: string) => l.startsWith('|')).length >= 2
+
+      if (isPipeTable) {
+        const tableLines = lines.filter((l: string) => l.startsWith('|') && !/^\|[-| :]+\|$/.test(l))
+        const rows = tableLines.map(line =>
+          line.split('|').map((c: string) => c.trim()).filter((c: string, i: number, a: string[]) =>
+            !(i === 0 && c === '') && !(i === a.length - 1 && c === '')
+          )
+        )
+        if (rows.length < 2) return `<p>${trimmed}</p>`
+
+        const headerRow = rows[0]
+        const dataRows = rows.slice(1)
+
+        let table = '<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.88rem">'
+        table += '<thead><tr style="background:#2ca3ee;color:#fff">'
+        headerRow.forEach((cell: string) => {
+          table += `<th style="padding:0.4rem 0.75rem;text-align:center;font-weight:700;border:1px solid #d1d5db">${cell}</th>`
+        })
+        table += '</tr></thead><tbody>'
+        dataRows.forEach((row: string[], ri: number) => {
+          const bg = ri % 2 === 0 ? '#f9fafb' : '#fff'
+          table += `<tr style="background:${bg}">`
+          row.forEach((cell: string, ci: number) => {
+            const align = ci === 0 ? 'left' : 'center'
+            const weight = ci === 0 ? '600' : '400'
+            table += `<td style="padding:0.4rem 0.75rem;text-align:${align};font-weight:${weight};border:1px solid #d1d5db">${cell}</td>`
+          })
+          table += '</tr>'
+        })
+        table += '</tbody></table>'
+        return table
+      }
+
+      if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
+        return `<h2>${trimmed.replace(/^\*\*|\*\*$/g, '').trim()}</h2>`
+      }
+
+      return `<p>${trimmed
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>')
+      }</p>`
+    })
+    .join('')
 }
 
 // ── Single match card ──────────────────────────────────────────────────────────
@@ -91,9 +137,12 @@ function MatchCard({ kb }: { kb: KBResult }) {
 
   const [generating, setGenerating]       = useState(false)
   const [publishing, setPublishing]       = useState(false)
+  const [fbLoading, setFbLoading]         = useState(false)
   const [generated, setGenerated]         = useState('')
   const [publishedSlug, setPublishedSlug] = useState('')
   const [error, setError]                 = useState('')
+  const [fbError, setFbError]             = useState('')
+  const [fbSuccess, setFbSuccess]         = useState('')
 
   const [competition, setCompetition]     = useState(
     COMPETITION_OPTIONS.includes(meta.competition) ? meta.competition : 'AFL'
@@ -130,7 +179,51 @@ function MatchCard({ kb }: { kb: KBResult }) {
     setGenerating(false)
   }
 
-  async function publish() {
+  async function publishToFacebook(slug?: string) {
+    setFbLoading(true); setFbError(''); setFbSuccess('')
+    const content = editor ? editor.getHTML() : generated
+    const plain = content.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    const liveUrl = slug ? `https://www.safootballer.com.au/match-results/${slug}` : ''
+    const res = await fetch('/api/publish-facebook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: plain.slice(0, 900), link: liveUrl }),
+    })
+    const data = await res.json()
+    setFbLoading(false)
+    if (data.success) setFbSuccess('Posted to Facebook!')
+    else setFbError(data.error ?? 'Facebook post failed')
+  }
+
+  async function publishBoth() {
+    setPublishing(true); setError('')
+    const content = editor ? editor.getHTML() : generated
+    const title = meta.venue ? `${homeTeam} v ${awayTeam} @ ${meta.venue}` : `${homeTeam} v ${awayTeam}`
+    const slug  = slugify(`${homeTeam} v ${awayTeam} ${meta.date?.slice(0, 10) ?? ''}`)
+    try {
+      const res = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title, slug, competition,
+          contentText: content, author,
+          countryLeague: competition === 'Country Football' ? countryLeague : null,
+          amateurGrade:  competition === 'Amateur' ? amateurGrade : competition === "SAWFL Women's" ? sawflGrade : null,
+          sanflGrade:    competition === 'SANFL' ? sanflGrade : null,
+          homeTeam, awayTeam,
+          homeScore: meta.homeScoreFormatted ?? String(meta.homeScore),
+          awayScore: meta.awayScoreFormatted ?? String(meta.awayScore),
+          matchDate: meta.date, venue: meta.venue, asDraft: false,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPublishedSlug(data.slug)
+        await publishToFacebook(data.slug)
+      } else throw new Error(data.error ?? 'Publish failed')
+    } catch (e: any) { setError(e.message) }
+    setPublishing(false)
+  }
     setPublishing(true); setError('')
     const content = editor ? editor.getHTML() : generated
     const title   = meta.venue
@@ -200,9 +293,23 @@ function MatchCard({ kb }: { kb: KBResult }) {
                 {generating ? '⏳' : '🔄 Regenerate'}
               </button>
               {!publishedSlug ? (
-                <button onClick={publish} disabled={publishing} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.5rem 1.25rem' }}>
-                  {publishing ? '⏳ Publishing...' : '🚀 Publish Live'}
-                </button>
+                <>
+                  <button onClick={publish} disabled={publishing || fbLoading} className="btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 1rem' }}>
+                    {publishing ? '⏳' : '🌐 Web'}
+                  </button>
+                  <button onClick={() => publishToFacebook()} disabled={fbLoading || publishing} style={{
+                    background: '#1877F2', color: '#fff', border: 'none', borderRadius: 8,
+                    padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                  }}>
+                    {fbLoading ? '⏳' : '📘 Facebook'}
+                  </button>
+                  <button onClick={publishBoth} disabled={publishing || fbLoading} style={{
+                    background: '#e6fe00', color: '#000', border: 'none', borderRadius: 8,
+                    padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                  }}>
+                    {publishing || fbLoading ? '⏳' : '🚀 Both'}
+                  </button>
+                </>
               ) : (
                 <a href={`https://www.safootballer.com.au/match-results/${publishedSlug}`} target="_blank" rel="noreferrer"
                   style={{ background: '#4ade80', color: '#000', borderRadius: 8, padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none' }}>
@@ -214,7 +321,9 @@ function MatchCard({ kb }: { kb: KBResult }) {
         </div>
       </div>
 
-      {error && <div className="alert-error" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{error}</div>}
+      {error    && <div className="alert-error" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{error}</div>}
+      {fbError  && <div className="alert-error" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>Facebook: {fbError}</div>}
+      {fbSuccess && <div style={{ marginBottom: '0.75rem', fontSize: '0.82rem', background: '#f0fdf4', border: '1px solid #4ade80', color: '#166534', padding: '0.5rem 0.75rem', borderRadius: 8 }}>{fbSuccess}</div>}
 
       {generated && (
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
