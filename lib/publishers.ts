@@ -22,53 +22,16 @@ function htmlToPortableText(html: string) {
   }
 
   const blocks: any[] = []
-
-  // Match tables AND h1-h4/p blocks in document order
-  const blockRegex = /<table[^>]*>([\s\S]*?)<\/table>|<(h1|h2|h3|h4|p)[^>]*>([\s\S]*?)<\/\2>/gi
+  const blockRegex = /<(h1|h2|h3|h4|p)[^>]*>([\s\S]*?)<\/\1>/gi
   let match
 
   while ((match = blockRegex.exec(html)) !== null) {
-    // ── TABLE ──────────────────────────────────────────────────────
-    if (match[1] !== undefined) {
-      const tableInner = match[1]
-      const rows: string[][] = []
-      const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
-      let rowMatch
-      while ((rowMatch = rowRegex.exec(tableInner)) !== null) {
-        const cells: string[] = []
-        const cellRegex = /<(td|th)[^>]*>([\s\S]*?)<\/\1>/gi
-        let cellMatch
-        while ((cellMatch = cellRegex.exec(rowMatch[1])) !== null) {
-          const text = cellMatch[2].replace(/<[^>]+>/g, '')
-            .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').trim()
-          cells.push(text)
-        }
-        if (cells.length) rows.push(cells)
-      }
+    const tag   = match[1].toLowerCase()
+    const inner = match[2]
 
-      rows.forEach((cells, ri) => {
-        const line = cells.join('   ')
-        blocks.push({
-          _type: 'block',
-          _key: uuidv4().replace(/-/g, '').slice(0, 12),
-          style: 'normal',
-          markDefs: [],
-          children: [{
-            _type: 'span',
-            _key: uuidv4().replace(/-/g, '').slice(0, 12),
-            text: line,
-            marks: ri === 0 ? ['strong'] : [],
-          }],
-        })
-      })
-      continue
+    const styleMap: Record<string, string> = {
+      h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', p: 'normal',
     }
-
-    // ── H1-H4 / P ──────────────────────────────────────────────────
-    const tag   = match[2].toLowerCase()
-    const inner = match[3]
-
-    const styleMap: Record<string, string> = { h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', p: 'normal' }
     const style = styleMap[tag] ?? 'normal'
     const parts = inner.split(/<br\s*\/?>/gi)
 
@@ -184,14 +147,17 @@ export async function publishToSanity({
     author,
   }
 
+  // Save country league
   if (competition === 'Country Football' && countryLeague) {
     doc.countryLeague = countryLeague
   }
 
+  // Save amateur grade (Amateur + SAWFL Women's both use amateurGrade field)
   if ((competition === 'Amateur' || competition === "SAWFL Women's") && amateurGrade) {
     doc.amateurGrade = amateurGrade
   }
 
+  // Save SANFL grade
   if (competition === 'SANFL' && sanflGrade) {
     doc.sanflGrade = sanflGrade
   }
