@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { SectionHeading } from './MatchSelectStep'
 import { slugify } from '@/lib/publishers'
-import { AUTHORS, COMPETITION_MAP, COUNTRY_LEAGUES } from '@/lib/constants'
+import { AUTHORS, COUNTRY_LEAGUES } from '@/lib/constants'
 
 const COMPETITION_OPTIONS = ['AFL', 'AFLW', 'SANFL', 'SANFLW', 'Amateur', "SAWFL Women's", 'Country Football']
 
@@ -92,10 +92,11 @@ function formatScore(score: number): string {
 }
 
 function cleanTeamName(name: string): string {
+  if (!name) return ''
   return name
     .replace(/\s*-\s*M\d+R?\s*$/i, '').replace(/\s*-\s*W\d+R?\s*$/i, '')
     .replace(/\s*-\s*C\d+\s*$/i, '').replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
-    .replace(/\s*-\s*Under\s*\d+\s*$/i, '').replace(/\s*-\s*U\d+\s*$/i, '')
+    .replace(/\s*-\s*Under\s*[\d.]+\s*$/i, '').replace(/\s*-\s*U\d+\s*$/i, '')
     .replace(/\s*\bM\d+R?\b\s*$/i, '').replace(/\s*\bW\d+R?\b\s*$/i, '')
     .replace(/\s*\bC\d+\b\s*$/i, '').replace(/\s*[-–]\s*Men'?s?\s*$/i, '')
     .replace(/\s*[-–]\s*Women'?s?\s*$/i, '').replace(/\s*\bMen'?s?\b\s*$/i, '')
@@ -103,7 +104,16 @@ function cleanTeamName(name: string): string {
     .replace(/\s*[-–]\s*Juniors?\s*$/i, '').replace(/\s*\bSeniors?\b\s*$/i, '')
     .replace(/\s*\bJuniors?\b\s*$/i, '').replace(/\s*[-–]?\s*[A-H]\s+Grade\s*$/i, '')
     .replace(/\s*[-–]?\s*Senior\s+Men'?s?\s*$/i, '').replace(/\s*[-–]?\s*Senior\s+Women'?s?\s*$/i, '')
-    .trim()
+    .replace(/\s*[-–]\s*[A-Z]\s*$/i, '').replace(/\s+Football Club\s*$/i, '')
+    .replace(/\s+FC\s*$/i, '').replace(/\s*\bLeague\b\s*$/i, '')
+    .replace(/\s*\bReserves\b\s*$/i, '').replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '').replace(/\s*\bBoys\s+Under\s*[\d.]+\b\s*$/i, '')
+    .replace(/\s*\bGirls\s+Under\s*[\d.]+\b\s*$/i, '').replace(/\s*\bUnder\s*[\d.]+\s*Boys\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Girls\b\s*$/i, '').replace(/\s*\bU[\d.]+\s*Boys\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+\s*Girls\b\s*$/i, '').replace(/\s*\bU[\d.]+s?\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '').replace(/\s*\bSnr\s+Colts\b\s*$/i, '')
+    .replace(/\s*\bSenior\s+Colts\b\s*$/i, '').replace(/\s*\bColts\b\s*$/i, '')
+    .replace(/\s*\bMixed\b\s*$/i, '').trim()
 }
 
 export function PublishStep({ content, contentType, meta, publishedSlug, onPublished }: Props) {
@@ -180,8 +190,9 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     (competition !== 'SANFL' || sanflGrade)
   )
 
-  async function publish(asDraft: boolean) {
-    setLoading(true); setError('')
+  async function publishToWeb(asDraft: boolean): Promise<string | null> {
+    setLoading(true)
+    setError('')
     const res = await fetch('/api/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -197,10 +208,39 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     setLoading(false)
     if (data.success) {
       if (!asDraft) onPublished(data.slug)
-      else alert('Draft saved in Sanity Studio!')
+      return data.slug
     } else {
       setError(data.error ?? 'Publish failed')
+      return null
     }
+  }
+
+  async function publishToFacebook(slug?: string) {
+    setFbLoading(true)
+    setFbError('')
+    setFbSuccess('')
+    const liveUrl = slug
+      ? `https://www.safootballer.com.au/match-results/${slug}`
+      : publishedSlug ? `https://www.safootballer.com.au/match-results/${publishedSlug}` : ''
+    const message = plain.slice(0, 900) + (plain.length > 900 ? '...' : '')
+    try {
+      const res = await fetch('/api/publish-facebook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, link: liveUrl }),
+      })
+      const data = await res.json()
+      if (data.success) setFbSuccess('Posted to Facebook!')
+      else setFbError(data.error ?? 'Facebook post failed')
+    } catch (e: any) {
+      setFbError(e.message)
+    }
+    setFbLoading(false)
+  }
+
+  async function publishBoth() {
+    const resultSlug = await publishToWeb(false)
+    if (resultSlug) await publishToFacebook(resultSlug)
   }
 
   const baseUrl = 'https://www.safootballer.com.au'
@@ -347,47 +387,6 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
             </select>
           </div>
 
-  async function publishToFacebook(slug?: string) {
-    setFbLoading(true); setFbError(''); setFbSuccess('')
-    const plain = stripHtml(content)
-    const liveUrl = slug
-      ? `https://www.safootballer.com.au/match-results/${slug}`
-      : publishedSlug ? `https://www.safootballer.com.au/match-results/${publishedSlug}` : ''
-    const message = `${plain.slice(0, 900)}${plain.length > 900 ? '...' : ''}`
-    const res = await fetch('/api/publish-facebook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, link: liveUrl }),
-    })
-    const data = await res.json()
-    setFbLoading(false)
-    if (data.success) setFbSuccess('Posted to Facebook!')
-    else setFbError(data.error ?? 'Facebook post failed')
-  }
-
-  async function publishBoth() {
-    setLoading(true); setError('')
-    const res = await fetch('/api/publish', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title, slug, competition, contentText: content, author,
-        countryLeague: competition === 'Country Football' ? countryLeague : null,
-        amateurGrade:  competition === 'Amateur' ? amateurGrade : competition === "SAWFL Women's" ? sawflGrade : null,
-        sanflGrade:    competition === 'SANFL' ? sanflGrade : null,
-        homeTeam, awayTeam, homeScore, awayScore, matchDate, venue, round, asDraft: false,
-      }),
-    })
-    const data = await res.json()
-    setLoading(false)
-    if (data.success) {
-      onPublished(data.slug)
-      await publishToFacebook(data.slug)
-    } else {
-      setError(data.error ?? 'Publish failed')
-    }
-  }
-
           {!ready && (
             <div className="alert-warning">
               {competition === 'Country Football' ? 'Fill in all fields including Country League to publish.'
@@ -397,19 +396,20 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
                 : 'Fill in Title, Slug, both teams, scores and match date to publish.'}
             </div>
           )}
+
           {error    && <div className="alert-error">{error}</div>}
           {fbError  && <div className="alert-error">Facebook: {fbError}</div>}
-          {fbSuccess && <div className="alert-success" style={{ background: '#f0fdf4', border: '1px solid #4ade80', color: '#166534', padding: '0.75rem', borderRadius: 8 }}>{fbSuccess}</div>}
+          {fbSuccess && <div style={{ background: '#f0fdf4', border: '1px solid #4ade80', color: '#166534', padding: '0.75rem', borderRadius: 8, fontSize: '0.9rem' }}>{fbSuccess}</div>}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
-            <button onClick={() => publish(false)} disabled={!ready || loading || fbLoading} className="btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
+            <button onClick={() => publishToWeb(false)} disabled={!ready || loading || fbLoading} className="btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
               {loading ? 'Publishing...' : '🌐 Publish to Web'}
             </button>
             <button onClick={() => publishToFacebook()} disabled={fbLoading || loading} style={{
               width: '100%', padding: '0.9rem', background: '#1877F2', color: '#fff',
               border: 'none', borderRadius: 10, fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer',
             }}>
-              {fbLoading ? 'Posting...' : '📘 Publish to Facebook'}
+              {fbLoading ? 'Posting to Facebook...' : '📘 Publish to Facebook'}
             </button>
             <button onClick={publishBoth} disabled={!ready || loading || fbLoading} style={{
               width: '100%', padding: '0.9rem', background: '#e6fe00', color: '#000',
@@ -417,7 +417,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
             }}>
               {loading || fbLoading ? 'Publishing...' : '🚀 Publish to Both'}
             </button>
-            <button onClick={() => publish(true)} disabled={!title || loading} className="btn-yellow" style={{ width: '100%', padding: '0.9rem', opacity: 0.7 }}>
+            <button onClick={() => publishToWeb(true)} disabled={!title || loading} className="btn-yellow" style={{ width: '100%', padding: '0.9rem', opacity: 0.7 }}>
               {'Save as Draft'}
             </button>
           </div>
