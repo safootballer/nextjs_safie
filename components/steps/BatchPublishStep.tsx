@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import { slugify } from '@/lib/publishers'
-import { AUTHORS, COMPETITION_MAP, COUNTRY_LEAGUES } from '@/lib/constants'
+import { AUTHORS, COUNTRY_LEAGUES } from '@/lib/constants'
 import { KBResult } from '@/app/dashboard/page'
 import { SectionHeading } from './MatchSelectStep'
 
@@ -31,102 +31,69 @@ const AMATEUR_GRADES: Record<string, string> = {
 function cleanTeamName(name: string): string {
   if (!name) return ''
   return name
-    .replace(/\s*-\s*M\d+R?\s*$/i, '')
-    .replace(/\s*-\s*W\d+R?\s*$/i, '')
-    .replace(/\s*-\s*C\d+\s*$/i, '')
-    .replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
-    .replace(/\s*-\s*Under\s*[\d.]+\s*$/i, '')
-    .replace(/\s*-\s*U\d+\s*$/i, '')
-    .replace(/\s*\bM\d+R?\b\s*$/i, '')
-    .replace(/\s*\bW\d+R?\b\s*$/i, '')
-    .replace(/\s*\bC\d+\b\s*$/i, '')
-    .replace(/\s*[-–]\s*Men'?s?\s*$/i, '')
-    .replace(/\s*[-–]\s*Women'?s?\s*$/i, '')
-    .replace(/\s*\bMen'?s?\b\s*$/i, '')
-    .replace(/\s*\bWomen'?s?\b\s*$/i, '')
-    .replace(/\s*[-–]\s*Seniors?\s*$/i, '')
-    .replace(/\s*[-–]\s*Juniors?\s*$/i, '')
-    .replace(/\s*\bSeniors?\b\s*$/i, '')
-    .replace(/\s*\bJuniors?\b\s*$/i, '')
-    .replace(/\s*[-–]?\s*[A-H]\s+Grade\s*$/i, '')
-    .replace(/\s*[-–]?\s*Senior\s+Men'?s?\s*$/i, '')
-    .replace(/\s*[-–]?\s*Senior\s+Women'?s?\s*$/i, '')
-    .replace(/\s*[-–]\s*[A-Z]\s*$/i, '')
-    .replace(/\s+Football Club\s*$/i, '')
-    .replace(/\s+FC\s*$/i, '')
-    .replace(/\s*\bLeague\b\s*$/i, '')
-    .replace(/\s*\bReserves\b\s*$/i, '')
-    .replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '')
-    .replace(/\s*\bBoys\s+Under\s*[\d.]+\b\s*$/i, '')
-    .replace(/\s*\bGirls\s+Under\s*[\d.]+\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\s*Boys\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\s*Girls\b\s*$/i, '')
-    .replace(/\s*\bU[\d.]+\s*Boys\b\s*$/i, '')
-    .replace(/\s*\bU[\d.]+\s*Girls\b\s*$/i, '')
-    .replace(/\s*\bU[\d.]+s?\b\s*$/i, '')
-    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '')
-    .replace(/\s*\bSnr\s+Colts\b\s*$/i, '')
-    .replace(/\s*\bSenior\s+Colts\b\s*$/i, '')
-    .replace(/\s*\bColts\b\s*$/i, '')
-    .replace(/\s*\bMixed\b\s*$/i, '')
-    .trim()
+    .replace(/\s*-\s*M\d+R?\s*$/i, '').replace(/\s*-\s*W\d+R?\s*$/i, '')
+    .replace(/\s*-\s*C\d+\s*$/i, '').replace(/\s*-?\s*[A-Z]\s+Grade\s*$/i, '')
+    .replace(/\s*-\s*Under\s*[\d.]+\s*$/i, '').replace(/\s*-\s*U\d+\s*$/i, '')
+    .replace(/\s*\bM\d+R?\b\s*$/i, '').replace(/\s*\bW\d+R?\b\s*$/i, '')
+    .replace(/\s*\bC\d+\b\s*$/i, '').replace(/\s*[-–]\s*Men'?s?\s*$/i, '')
+    .replace(/\s*[-–]\s*Women'?s?\s*$/i, '').replace(/\s*\bMen'?s?\b\s*$/i, '')
+    .replace(/\s*\bWomen'?s?\b\s*$/i, '').replace(/\s*[-–]\s*Seniors?\s*$/i, '')
+    .replace(/\s*[-–]\s*Juniors?\s*$/i, '').replace(/\s*\bSeniors?\b\s*$/i, '')
+    .replace(/\s*\bJuniors?\b\s*$/i, '').replace(/\s*[-–]?\s*[A-H]\s+Grade\s*$/i, '')
+    .replace(/\s*[-–]?\s*Senior\s+Men'?s?\s*$/i, '').replace(/\s*[-–]?\s*Senior\s+Women'?s?\s*$/i, '')
+    .replace(/\s*[-–]\s*[A-Z]\s*$/i, '').replace(/\s+Football Club\s*$/i, '')
+    .replace(/\s+FC\s*$/i, '').replace(/\s*\bLeague\b\s*$/i, '')
+    .replace(/\s*\bReserves\b\s*$/i, '').replace(/\s*\bU[\d.]+\s*Mixed\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Mixed\b\s*$/i, '').replace(/\s*\bBoys\s+Under\s*[\d.]+\b\s*$/i, '')
+    .replace(/\s*\bGirls\s+Under\s*[\d.]+\b\s*$/i, '').replace(/\s*\bUnder\s*[\d.]+\s*Boys\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\s*Girls\b\s*$/i, '').replace(/\s*\bU[\d.]+\s*Boys\b\s*$/i, '')
+    .replace(/\s*\bU[\d.]+\s*Girls\b\s*$/i, '').replace(/\s*\bU[\d.]+s?\b\s*$/i, '')
+    .replace(/\s*\bUnder\s*[\d.]+\b\s*$/i, '').replace(/\s*\bSnr\s+Colts\b\s*$/i, '')
+    .replace(/\s*\bSenior\s+Colts\b\s*$/i, '').replace(/\s*\bColts\b\s*$/i, '')
+    .replace(/\s*\bMixed\b\s*$/i, '').trim()
 }
 
 function markdownToHtml(text: string): string {
   let normalised = text
   normalised = normalised.replace(/(\S)\s*\|\s*/g, '$1\n| ')
-
-  return normalised
-    .split('\n\n')
-    .filter(Boolean)
-    .map(block => {
-      const trimmed = block.trim()
-      const lines = trimmed.split('\n').map((l: string) => l.trim()).filter(Boolean)
-      const isPipeTable = lines.length >= 2 && lines.filter((l: string) => l.startsWith('|')).length >= 2
-
-      if (isPipeTable) {
-        const tableLines = lines.filter((l: string) => l.startsWith('|') && !/^\|[-| :]+\|$/.test(l))
-        const rows = tableLines.map(line =>
-          line.split('|').map((c: string) => c.trim()).filter((c: string, i: number, a: string[]) =>
-            !(i === 0 && c === '') && !(i === a.length - 1 && c === '')
-          )
+  return normalised.split('\n\n').filter(Boolean).map(block => {
+    const trimmed = block.trim()
+    const lines = trimmed.split('\n').map((l: string) => l.trim()).filter(Boolean)
+    const isPipeTable = lines.length >= 2 && lines.filter((l: string) => l.startsWith('|')).length >= 2
+    if (isPipeTable) {
+      const tableLines = lines.filter((l: string) => l.startsWith('|') && !/^\|[-| :]+\|$/.test(l))
+      const rows = tableLines.map(line =>
+        line.split('|').map((c: string) => c.trim()).filter((c: string, i: number, a: string[]) =>
+          !(i === 0 && c === '') && !(i === a.length - 1 && c === '')
         )
-        if (rows.length < 2) return `<p>${trimmed}</p>`
-
-        const headerRow = rows[0]
-        const dataRows = rows.slice(1)
-
-        let table = '<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.88rem">'
-        table += '<thead><tr style="background:#2ca3ee;color:#fff">'
-        headerRow.forEach((cell: string) => {
-          table += `<th style="padding:0.4rem 0.75rem;text-align:center;font-weight:700;border:1px solid #d1d5db">${cell}</th>`
+      )
+      if (rows.length < 2) return `<p>${trimmed}</p>`
+      const headerRow = rows[0]
+      const dataRows = rows.slice(1)
+      let table = '<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.88rem">'
+      table += '<thead><tr style="background:#2ca3ee;color:#fff">'
+      headerRow.forEach((cell: string) => {
+        table += `<th style="padding:0.4rem 0.75rem;text-align:center;font-weight:700;border:1px solid #d1d5db">${cell}</th>`
+      })
+      table += '</tr></thead><tbody>'
+      dataRows.forEach((row: string[], ri: number) => {
+        const bg = ri % 2 === 0 ? '#f9fafb' : '#fff'
+        table += `<tr style="background:${bg}">`
+        row.forEach((cell: string, ci: number) => {
+          const align = ci === 0 ? 'left' : 'center'
+          const weight = ci === 0 ? '600' : '400'
+          table += `<td style="padding:0.4rem 0.75rem;text-align:${align};font-weight:${weight};border:1px solid #d1d5db">${cell}</td>`
         })
-        table += '</tr></thead><tbody>'
-        dataRows.forEach((row: string[], ri: number) => {
-          const bg = ri % 2 === 0 ? '#f9fafb' : '#fff'
-          table += `<tr style="background:${bg}">`
-          row.forEach((cell: string, ci: number) => {
-            const align = ci === 0 ? 'left' : 'center'
-            const weight = ci === 0 ? '600' : '400'
-            table += `<td style="padding:0.4rem 0.75rem;text-align:${align};font-weight:${weight};border:1px solid #d1d5db">${cell}</td>`
-          })
-          table += '</tr>'
-        })
-        table += '</tbody></table>'
-        return table
-      }
-
-      if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
-        return `<h2>${trimmed.replace(/^\*\*|\*\*$/g, '').trim()}</h2>`
-      }
-
-      return `<p>${trimmed
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\n/g, '<br>')
-      }</p>`
-    })
-    .join('')
+        table += '</tr>'
+      })
+      table += '</tbody></table>'
+      return table
+    }
+    if (/^\*\*[^*\n]+\*\*$/.test(trimmed)) {
+      return `<h2>${trimmed.replace(/^\*\*|\*\*$/g, '').trim()}</h2>`
+    }
+    return `<p>${trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>`
+  }).join('')
 }
 
 // ── Single match card ──────────────────────────────────────────────────────────
@@ -166,7 +133,7 @@ function MatchCard({ kb }: { kb: KBResult }) {
   async function generate() {
     setGenerating(true); setError('')
     try {
-      const res  = await fetch('/api/generate', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: kb.knowledge, contentType: 'Magazine match report', matchId: kb.matchId }),
@@ -179,23 +146,7 @@ function MatchCard({ kb }: { kb: KBResult }) {
     setGenerating(false)
   }
 
-  async function publishToFacebook(slug?: string) {
-    setFbLoading(true); setFbError(''); setFbSuccess('')
-    const content = editor ? editor.getHTML() : generated
-    const plain = content.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
-    const liveUrl = slug ? `https://www.safootballer.com.au/match-results/${slug}` : ''
-    const res = await fetch('/api/publish-facebook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: plain.slice(0, 900), link: liveUrl }),
-    })
-    const data = await res.json()
-    setFbLoading(false)
-    if (data.success) setFbSuccess('Posted to Facebook!')
-    else setFbError(data.error ?? 'Facebook post failed')
-  }
-
-  async function publishBoth() {
+  async function publishToWeb(): Promise<string | null> {
     setPublishing(true); setError('')
     const content = editor ? editor.getHTML() : generated
     const title = meta.venue ? `${homeTeam} v ${awayTeam} @ ${meta.venue}` : `${homeTeam} v ${awayTeam}`
@@ -217,43 +168,33 @@ function MatchCard({ kb }: { kb: KBResult }) {
         }),
       })
       const data = await res.json()
-      if (data.success) {
-        setPublishedSlug(data.slug)
-        await publishToFacebook(data.slug)
-      } else throw new Error(data.error ?? 'Publish failed')
-    } catch (e: any) { setError(e.message) }
-    setPublishing(false)
+      if (data.success) { setPublishedSlug(data.slug); return data.slug }
+      else throw new Error(data.error ?? 'Publish failed')
+    } catch (e: any) { setError(e.message); return null }
+    finally { setPublishing(false) }
   }
-    setPublishing(true); setError('')
-    const content = editor ? editor.getHTML() : generated
-    const title   = meta.venue
-      ? `${homeTeam} v ${awayTeam} @ ${meta.venue}`
-      : `${homeTeam} v ${awayTeam}`
-    const slug    = slugify(`${homeTeam} v ${awayTeam} ${meta.date?.slice(0, 10) ?? ''}`)
 
+  async function publishToFacebook(slug?: string) {
+    setFbLoading(true); setFbError(''); setFbSuccess('')
+    const content = editor ? editor.getHTML() : generated
+    const plain = content.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    const liveUrl = slug ? `https://www.safootballer.com.au/match-results/${slug}` : ''
     try {
-      const res = await fetch('/api/publish', {
+      const res = await fetch('/api/publish-facebook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title, slug, competition,
-          contentText: content, author,
-          countryLeague: competition === 'Country Football' ? countryLeague : null,
-          amateurGrade:  competition === 'Amateur' ? amateurGrade : competition === "SAWFL Women's" ? sawflGrade : null,
-          sanflGrade:    competition === 'SANFL' ? sanflGrade : null,
-          homeTeam, awayTeam,
-          homeScore: meta.homeScoreFormatted ?? String(meta.homeScore),
-          awayScore: meta.awayScoreFormatted ?? String(meta.awayScore),
-          matchDate: meta.date,
-          venue:     meta.venue,
-          asDraft:   false,
-        }),
+        body: JSON.stringify({ message: plain.slice(0, 900), link: liveUrl }),
       })
       const data = await res.json()
-      if (data.success) setPublishedSlug(data.slug)
-      else throw new Error(data.error ?? 'Publish failed')
-    } catch (e: any) { setError(e.message) }
-    setPublishing(false)
+      if (data.success) setFbSuccess('Posted to Facebook!')
+      else throw new Error(data.error ?? 'Facebook post failed')
+    } catch (e: any) { setFbError(e.message) }
+    setFbLoading(false)
+  }
+
+  async function publishBoth() {
+    const slug = await publishToWeb()
+    if (slug) await publishToFacebook(slug)
   }
 
   const labelStyle: React.CSSProperties = {
@@ -294,7 +235,7 @@ function MatchCard({ kb }: { kb: KBResult }) {
               </button>
               {!publishedSlug ? (
                 <>
-                  <button onClick={publish} disabled={publishing || fbLoading} className="btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 1rem' }}>
+                  <button onClick={publishToWeb} disabled={publishing || fbLoading} className="btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 1rem' }}>
                     {publishing ? '⏳' : '🌐 Web'}
                   </button>
                   <button onClick={() => publishToFacebook()} disabled={fbLoading || publishing} style={{
