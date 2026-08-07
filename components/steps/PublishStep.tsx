@@ -151,6 +151,7 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
   const [error, setError]         = useState('')
   const [fbError, setFbError]     = useState('')
   const [fbSuccess, setFbSuccess] = useState('')
+  const [fbPhoto, setFbPhoto]     = useState<File | null>(null)
 
   useEffect(() => {
     if (!meta) return
@@ -248,11 +249,21 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
     const message = `${header}\n\n${'—'.repeat(20)}\n\n${plain}`
 
     try {
-      const res = await fetch('/api/publish-facebook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, link: liveUrl }),
-      })
+      let res: Response
+      if (fbPhoto) {
+        // Send as multipart form data with the photo
+        const form = new FormData()
+        form.append('message', message)
+        form.append('link', liveUrl)
+        form.append('image', fbPhoto)
+        res = await fetch('/api/publish-facebook', { method: 'POST', body: form })
+      } else {
+        res = await fetch('/api/publish-facebook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, link: liveUrl }),
+        })
+      }
       const data = await res.json()
       if (data.success) setFbSuccess('Posted to Facebook!')
       else setFbError(data.error ?? 'Facebook post failed')
@@ -424,6 +435,23 @@ export function PublishStep({ content, contentType, meta, publishedSlug, onPubli
           {error    && <div className="alert-error">{error}</div>}
           {fbError  && <div className="alert-error">Facebook: {fbError}</div>}
           {fbSuccess && <div style={{ background: '#f0fdf4', border: '1px solid #4ade80', color: '#166534', padding: '0.75rem', borderRadius: 8, fontSize: '0.9rem' }}>{fbSuccess}</div>}
+
+          {/* Facebook photo upload */}
+          <div style={{ border: '1px dashed rgba(24,119,242,0.4)', borderRadius: 10, padding: '0.75rem', background: 'rgba(24,119,242,0.05)' }}>
+            <label style={{ ...labelStyle, color: '#1877F2', marginBottom: '0.5rem' }}>📷 Facebook Photo (optional)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={e => setFbPhoto(e.target.files?.[0] ?? null)}
+              style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', width: '100%' }}
+            />
+            {fbPhoto && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <span style={{ fontSize: '0.78rem', color: '#4ade80' }}>✓ {fbPhoto.name}</span>
+                <button onClick={() => setFbPhoto(null)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}>Remove</button>
+              </div>
+            )}
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
             <button onClick={() => publishToWeb(false)} disabled={!ready || loading || fbLoading} className="btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
