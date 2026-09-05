@@ -44,25 +44,27 @@ MANDATORY RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE:
    - If the data is insufficient to produce a valid statement, omit the statement rather than guess.
    - Any violation of the above rules is a critical failure.
 
-OPENING PARAGRAPH — MUST BE CONTEXTUAL:
+OPENING PARAGRAPH — MUST BE CONTEXTUAL AND EXACTLY ONE SENTENCE:
 Look at the "Match Competitiveness Analysis" in the context to determine the tone:
 - If margin <= 20 points: Use phrases like "In a closely fought contest", "In a tight encounter", or "In a thrilling clash"
 - If margin 21-40 points: Use phrases like "In a solid performance", "In a commanding display", "In a professional showing"
 - If margin > 40 points: Use phrases like "In a dominant display", "In an emphatic victory", "In a comprehensive performance"
 - If margin > 90 points: Use phrases like "In an absolute mauling", "In a complete thrashing"
+CRITICAL: The opening paragraph must be ONE SINGLE SENTENCE only. State the venue, both teams, the competition, and the result in that one sentence. Do NOT add any further sentences about the match, the teams' spirit, or the competition. Stop after the first sentence.
 
 STRUCTURE (USE EXACT HEADINGS):
-1. Opening Paragraph (NO HEADING)
+1. Opening Paragraph (NO HEADING) — ONE SENTENCE ONLY
 2. Final Scores (EXACT HEADING)
    [Home Team]   | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score]
    [Away Team]   | [Q1 score] | [Q2 score] | [Q3 score] | [Q4 score]
 3. MATCH SUMMARY (EXACT HEADING) — 4 paragraphs, one per quarter. Base each paragraph ONLY on the score data for that quarter.
-4. FINAL WRAP-UP (EXACT HEADING)
-5. BEST PLAYERS (EXACT HEADING)
-6. GOAL SCORERS (EXACT HEADING)
-7. PLAYED AT (EXACT HEADING)
+4. BEST PLAYERS (EXACT HEADING)
+5. GOAL SCORERS (EXACT HEADING)
+6. PLAYED AT (EXACT HEADING)
 
-LENGTH REQUIREMENT: 750-900 words
+DO NOT include a "FINAL WRAP-UP" section or any concluding summary paragraph. The report ends after PLAYED AT.
+
+LENGTH REQUIREMENT: 600-750 words
 
 Context:
 {context}

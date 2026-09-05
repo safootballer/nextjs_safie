@@ -76,3 +76,13 @@ model MatchLink {
 
   @@map("match_links")
 }
+model crm_activity_log {
+  id           Int     @id @default(autoincrement())
+  entity_id    Int?
+  entity_name  String? @db.VarChar
+  action       String? @db.VarChar
+  detail       String?
+  performed_by String? @db.VarChar
+  performed_at String? @db.VarChar
+  entity_type  String? @db.VarChar
+}
