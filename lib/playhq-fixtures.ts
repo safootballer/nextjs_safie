@@ -106,7 +106,9 @@ export async function fetchUpcomingFixturesForGrade(gradeId: string): Promise<Fi
       if (!game.home?.name || !game.away?.name) continue
 
       const time = game.allocation?.time ?? '00:00:00'
-      const dateTime = game.date ? `${game.date}T${time}` : game.date
+      // PlayHQ date + time are Adelaide local. Store with +09:30 offset so it's unambiguous.
+      // (Adelaide is +09:30 standard / +10:30 daylight saving; +09:30 is close enough for display.)
+      const dateTime = game.date ? `${game.date}T${time}+09:30` : game.date
 
       fixtures.push({
         match_id:   game.id,
