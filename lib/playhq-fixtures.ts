@@ -89,22 +89,24 @@ export async function fetchUpcomingFixturesForGrade(gradeId: string): Promise<Fi
   if (!rounds.length) return []
 
   const fixtures: Fixture[] = []
-  const now = new Date()
 
-  // Scan ALL rounds — keep every UPCOMING game with a future date.
-  // (Previously only scanned current + next 2, which missed some grades.)
-  for (const round of rounds) {
+  // Scan from the current round onward (current + all later rounds incl. finals).
+  // This catches upcoming + finals without querying every early completed round.
+  const currentIdx = rounds.findIndex(r => r.current)
+  const startIdx = currentIdx >= 0 ? currentIdx : 0
+  const roundsToScan = rounds.slice(startIdx)
+
+  for (const round of roundsToScan) {
     const fxRes = await safePost(FIXTURE_BY_ROUND_QUERY, { roundID: round.id })
     if (fxRes.error || !fxRes.data?.discoverFixtureByRound) continue
 
     for (const game of fxRes.data.discoverFixtureByRound.games ?? []) {
+      // Trust PlayHQ's status — if it says UPCOMING, it's not yet played.
       if (game.status?.value !== 'UPCOMING') continue
       if (!game.home?.name || !game.away?.name) continue
 
       const time = game.allocation?.time ?? '00:00:00'
       const dateTime = game.date ? `${game.date}T${time}` : game.date
-      const gd = dateTime ? new Date(dateTime) : null
-      if (gd && gd < now) continue
 
       fixtures.push({
         match_id:   game.id,
@@ -119,7 +121,6 @@ export async function fetchUpcomingFixturesForGrade(gradeId: string): Promise<Fi
         status:     'UPCOMING',
       })
     }
-    // Small delay between round queries to avoid rate limiting
     await new Promise(r => setTimeout(r, 250))
   }
 

@@ -33,8 +33,7 @@ export async function GET(req: NextRequest) {
   const gradeId  = searchParams.get('gradeId')
 
   try {
-    const now = new Date()
-    let where: any = { match_date: { gte: now } }
+    let where: any = {}
 
     if (gradeId) {
       where.grade_id = gradeId
