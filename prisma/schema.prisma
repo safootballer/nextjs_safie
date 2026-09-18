@@ -86,3 +86,18 @@ model crm_activity_log {
   performed_at String? @db.VarChar
   entity_type  String? @db.VarChar
 }
+
+model fixtures {
+  id          Int       @id @default(autoincrement())
+  match_id    String    @unique
+  match_date  DateTime? @db.Timestamptz(6)
+  home_team   String?
+  away_team   String?
+  venue       String?
+  competition String?
+  grade_id    String?
+  grade_name  String?
+  round       String?
+  status      String?
+  synced_at   DateTime? @default(now()) @db.Timestamptz(6)
+}
