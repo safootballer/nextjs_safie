@@ -1,6 +1,6 @@
-// safie-leagues/lib/playhq-fixtures.ts
+// lib/playhq-fixtures.ts
 // Fetches UPCOMING fixtures from PlayHQ.
-// Flow: grade -> rounds (find current + upcoming) -> fixtures per round -> keep UPCOMING games.
+// Flow: grade -> rounds -> fixtures per round -> keep UPCOMING games.
 
 export const PLAYHQ_GRAPHQL_URL = 'https://api.playhq.com/graphql'
 
@@ -78,9 +78,6 @@ export interface Fixture {
   status: string
 }
 
-// Fetch upcoming fixtures for one grade.
-// Strategy: get rounds, then fetch fixtures from the current round + any later rounds,
-// stopping once we've collected upcoming games (limit rounds scanned to avoid huge loops).
 export async function fetchUpcomingFixturesForGrade(gradeId: string): Promise<Fixture[]> {
   const roundsRes = await safePost(GRADE_ROUNDS_QUERY, { gradeID: gradeId })
   if (roundsRes.error || !roundsRes.data?.discoverGrade) return []
@@ -91,15 +88,12 @@ export async function fetchUpcomingFixturesForGrade(gradeId: string): Promise<Fi
   const rounds: any[] = grade.rounds ?? []
   if (!rounds.length) return []
 
-  // Find the current round index; scan from there forward (current + next few rounds)
-  const currentIdx = rounds.findIndex(r => r.current)
-  const startIdx = currentIdx >= 0 ? currentIdx : 0
-  const roundsToScan = rounds.slice(startIdx, startIdx + 3) // current + next 2
-
   const fixtures: Fixture[] = []
   const now = new Date()
 
-  for (const round of roundsToScan) {
+  // Scan ALL rounds — keep every UPCOMING game with a future date.
+  // (Previously only scanned current + next 2, which missed some grades.)
+  for (const round of rounds) {
     const fxRes = await safePost(FIXTURE_BY_ROUND_QUERY, { roundID: round.id })
     if (fxRes.error || !fxRes.data?.discoverFixtureByRound) continue
 
@@ -107,11 +101,10 @@ export async function fetchUpcomingFixturesForGrade(gradeId: string): Promise<Fi
       if (game.status?.value !== 'UPCOMING') continue
       if (!game.home?.name || !game.away?.name) continue
 
-      // Combine date + time
       const time = game.allocation?.time ?? '00:00:00'
       const dateTime = game.date ? `${game.date}T${time}` : game.date
       const gd = dateTime ? new Date(dateTime) : null
-      if (gd && gd < now) continue // skip past
+      if (gd && gd < now) continue
 
       fixtures.push({
         match_id:   game.id,
@@ -127,7 +120,7 @@ export async function fetchUpcomingFixturesForGrade(gradeId: string): Promise<Fi
       })
     }
     // Small delay between round queries to avoid rate limiting
-    await new Promise(r => setTimeout(r, 300))
+    await new Promise(r => setTimeout(r, 250))
   }
 
   return fixtures
