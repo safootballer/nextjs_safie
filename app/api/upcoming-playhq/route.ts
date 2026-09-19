@@ -33,7 +33,10 @@ export async function GET(req: NextRequest) {
   const gradeId  = searchParams.get('gradeId')
 
   try {
-    let where: any = {}
+    // Hide games that have already been played.
+    // A match runs ~2.5 hours, so hide anything whose start time is more than 3 hours ago.
+    const cutoff = new Date(Date.now() - 3 * 60 * 60 * 1000)
+    let where: any = { match_date: { gte: cutoff } }
 
     if (gradeId) {
       where.grade_id = gradeId
